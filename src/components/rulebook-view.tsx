@@ -461,7 +461,7 @@ export function RulebookView() {
         
         <ScrollView contentContainerStyle={styles.detailsScroll} style={{ padding: Spacing.four }}>
           <ThemedView type="backgroundElement" style={styles.homebrewForm}>
-            <ThemedText type="smallBold" style={{ color: '#D81921' }}>Forge Homebrew Content</ThemedText>
+            <ThemedText type="smallBold" style={{ color: '#dfb15b' }}>Forge Homebrew Content</ThemedText>
             
             <View style={styles.formGroup}>
               <ThemedText type="small" themeColor="textSecondary">Creation Title</ThemedText>
@@ -480,7 +480,7 @@ export function RulebookView() {
                 {['Spell', 'Race', 'Class', 'Magic Item', 'Feat'].map((t) => (
                   <Pressable
                     key={t}
-                    style={[styles.pickerBtn, { borderColor: theme.backgroundSelected }, homebrewType === t && { backgroundColor: '#D81921' }]}
+                    style={[styles.pickerBtn, { borderColor: theme.backgroundSelected }, homebrewType === t && { backgroundColor: '#dfb15b' }]}
                     onPress={() => setHomebrewType(t)}>
                     <ThemedText style={[styles.pickerBtnText, homebrewType === t && { color: '#fff' }]}>{t}</ThemedText>
                   </Pressable>
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.four,
   },
   title: {
-    color: '#D81921',
+    color: '#dfb15b',
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
     gap: Spacing.one,
     borderLeftWidth: 3,
-    borderLeftColor: '#D81921',
+    borderLeftColor: '#dfb15b',
   },
   cardHover: {
     transform: [{ translateY: -1 }],
@@ -626,10 +626,10 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.two,
     backgroundColor: 'rgba(216, 25, 33, 0.1)',
     borderWidth: 1,
-    borderColor: '#D81921',
+    borderColor: '#dfb15b',
   },
   backBtnText: {
-    color: '#D81921',
+    color: '#dfb15b',
     fontWeight: 'bold',
     fontSize: 13,
   },
@@ -682,14 +682,14 @@ const styles = StyleSheet.create({
   },
   activeItemTabBtn: {
     borderBottomWidth: 2,
-    borderBottomColor: '#D81921',
+    borderBottomColor: '#dfb15b',
   },
   itemTabBtnText: {
     fontSize: 12,
     fontWeight: 'bold',
   },
   activeItemTabBtnText: {
-    color: '#D81921',
+    color: '#dfb15b',
   },
   listItemBtn: {
     flexDirection: 'row',
@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
   },
   detailsTitle: {
     fontSize: 24,
-    color: '#D81921',
+    color: '#dfb15b',
     fontWeight: 'bold',
   },
   detailsSub: {
@@ -739,7 +739,7 @@ const styles = StyleSheet.create({
   },
   subHeading: {
     fontSize: 14,
-    color: '#D81921',
+    color: '#dfb15b',
   },
   tagContainer: {
     flexDirection: 'row',
@@ -766,7 +766,7 @@ const styles = StyleSheet.create({
     marginVertical: Spacing.one,
   },
   featTitle: {
-    color: '#D81921',
+    color: '#dfb15b',
     fontSize: 15,
   },
   homebrewForm: {
@@ -803,7 +803,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   saveHomebrewBtn: {
-    backgroundColor: '#D81921',
+    backgroundColor: '#dfb15b',
     height: 38,
     borderRadius: Spacing.two,
     justifyContent: 'center',
@@ -833,7 +833,7 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.one,
   },
   hbBadgeText: {
-    color: '#D81921',
+    color: '#dfb15b',
     fontSize: 9,
     fontWeight: 'bold',
   },

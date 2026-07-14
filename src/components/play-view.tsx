@@ -31,7 +31,7 @@ const PLATFORMS: GamePlatform[] = [
       'Access official digital books, character creator, campaign manager, and official rules integration. Great for tracking campaigns online.',
     url: 'https://www.dndbeyond.com',
     badge: 'Official',
-    badgeColor: '#D81921',
+    badgeColor: '#dfb15b',
   },
   {
     name: 'Roll20',
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.four,
   },
   title: {
-    color: '#D81921',
+    color: '#dfb15b',
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     borderRadius: Spacing.three,
     borderLeftWidth: 4,
-    borderLeftColor: '#D81921',
+    borderLeftColor: '#dfb15b',
     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
     gap: Spacing.three,
     justifyContent: 'space-between',
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   cardTag: {
     fontSize: 10,
     marginTop: Spacing.half,
-    color: '#D81921',
+    color: '#dfb15b',
   },
   desc: {
     lineHeight: 18,
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   launchLink: {
-    color: '#D81921',
+    color: '#dfb15b',
     fontSize: 12,
   },
 });

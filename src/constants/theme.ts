@@ -14,13 +14,17 @@ export const Colors = {
     backgroundElement: '#F0F0F3',
     backgroundSelected: '#E0E1E6',
     textSecondary: '#60646C',
+    accent: '#D81921',
+    borderColor: '#e2e8f0',
   },
   dark: {
     text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    background: '#08080a', // Immersive pitch charcoal
+    backgroundElement: '#121215', // Sleek cards
+    backgroundSelected: '#202025', // Highlighted
+    textSecondary: '#9ca3af',
+    accent: '#dfb15b', // Alchemy gold/amber accent
+    borderColor: '#1d1d21', // Thin dark borders
   },
 } as const;
 

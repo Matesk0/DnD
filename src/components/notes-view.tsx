@@ -376,8 +376,15 @@ export function NotesView() {
               style={({ hovered, pressed }) => [
                 styles.campaignCard,
                 { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected },
-                hovered && { borderColor: '#D81921' },
-                pressed && { opacity: 0.9 },
+                  hovered && {
+                    borderColor: '#dfb15b',
+                    shadowColor: '#dfb15b',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 8,
+                    elevation: 4,
+                  },
+                  pressed && { opacity: 0.9 },
               ]}
               onPress={() => setSelectedCampaignId(c.id)}>
               <ThemedText style={styles.campaignEmoji}>{c.emoji}</ThemedText>
@@ -475,13 +482,13 @@ export function NotesView() {
                   {
                     left: pos.x,
                     top: pos.y,
-                    borderColor: isNoteActive ? '#D81921' : theme.backgroundSelected,
-                    backgroundColor: isNoteActive ? '#D81921' : theme.backgroundElement,
+                    borderColor: isNoteActive ? '#dfb15b' : theme.backgroundSelected,
+                    backgroundColor: isNoteActive ? '#dfb15b' : theme.backgroundElement,
                   },
                    hovered && {
-                     borderColor: '#D81921',
+                     borderColor: '#dfb15b',
                      transform: [{ scale: 1.12 }],
-                     shadowColor: '#D81921',
+                     shadowColor: '#dfb15b',
                      shadowOffset: { width: 0, height: 0 },
                      shadowOpacity: 0.6,
                      shadowRadius: 8,
@@ -505,7 +512,7 @@ export function NotesView() {
           <ThemedView type="backgroundElement" style={styles.modalContent}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
-              <ThemedText type="smallBold" style={{ color: '#D81921' }}>
+              <ThemedText type="smallBold" style={{ color: '#dfb15b' }}>
                 {noteEditMode ? '📝 Editing Note' : '📖 Reading Note'}
               </ThemedText>
               <View style={styles.modalHeaderActions}>
@@ -561,7 +568,7 @@ export function NotesView() {
                             style={[
                               styles.linkSelectorBadge,
                               { borderColor: theme.backgroundSelected },
-                              isLinked && { backgroundColor: '#D81921', borderColor: '#D81921' },
+                              isLinked && { backgroundColor: '#dfb15b', borderColor: '#dfb15b' },
                             ]}
                             onPress={() => toggleLinkInEdit(n.id)}>
                             <ThemedText style={[styles.linkSelectorBadgeText, isLinked && { color: '#fff' }]}>
@@ -593,7 +600,7 @@ export function NotesView() {
 
                 {/* Relational Backlinks */}
                 <View style={styles.relationsGroup}>
-                  <ThemedText type="smallBold" style={{ color: '#D81921' }}>
+                  <ThemedText type="smallBold" style={{ color: '#dfb15b' }}>
                     Backlinks (Who references this note)
                   </ThemedText>
                   <View style={styles.relationsList}>
@@ -615,7 +622,7 @@ export function NotesView() {
 
                 {/* Relational Outgoing Links */}
                 <View style={styles.relationsGroup}>
-                  <ThemedText type="smallBold" style={{ color: '#D81921' }}>
+                  <ThemedText type="smallBold" style={{ color: '#dfb15b' }}>
                     Outgoing Connections
                   </ThemedText>
                   <View style={styles.relationsList}>
@@ -657,7 +664,7 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
   },
   title: {
-    color: '#D81921',
+    color: '#dfb15b',
     fontWeight: 'bold',
   },
   subtitle: {
@@ -677,7 +684,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   createBtn: {
-    backgroundColor: '#D81921',
+    backgroundColor: '#dfb15b',
     paddingVertical: Spacing.one,
     paddingHorizontal: Spacing.two,
     borderRadius: Spacing.two,
@@ -742,7 +749,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one,
     paddingHorizontal: Spacing.two,
     borderRadius: Spacing.one,
-    backgroundColor: '#D81921',
+    backgroundColor: '#dfb15b',
   },
   toolbarBtnText: {
     color: '#fff',
@@ -876,7 +883,7 @@ const styles = StyleSheet.create({
   editBtn: {
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: '#D81921',
+    borderColor: '#dfb15b',
     height: 40,
     borderRadius: Spacing.two,
     justifyContent: 'center',
@@ -884,7 +891,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.four,
   },
   editBtnText: {
-    color: '#D81921',
+    color: '#dfb15b',
     fontWeight: 'bold',
     fontSize: 13,
   },
@@ -927,7 +934,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   saveBtn: {
-    backgroundColor: '#D81921',
+    backgroundColor: '#dfb15b',
     height: 40,
     borderRadius: Spacing.two,
     justifyContent: 'center',

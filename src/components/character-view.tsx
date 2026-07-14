@@ -311,7 +311,14 @@ export function CharacterView() {
                 style={({ hovered, pressed }) => [
                   styles.vaultCard,
                   { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected },
-                  hovered && { borderColor: '#D81921' },
+                  hovered && {
+                    borderColor: '#dfb15b',
+                    shadowColor: '#dfb15b',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 8,
+                    elevation: 4,
+                  },
                   pressed && { opacity: 0.95 },
                 ]}
                 onPress={() => {
@@ -446,7 +453,7 @@ export function CharacterView() {
                           style={[
                             styles.cardPickerBtn,
                             { borderColor: theme.backgroundSelected },
-                            isSelected && { backgroundColor: '#D81921', borderColor: '#D81921' },
+                            isSelected && { backgroundColor: '#dfb15b', borderColor: '#dfb15b' },
                           ]}
                           onPress={() => setSelectedRace(race)}>
                           <ThemedText style={styles.cardEmoji}>{race.emoji}</ThemedText>
@@ -473,7 +480,7 @@ export function CharacterView() {
                           style={[
                             styles.cardPickerBtn,
                             { borderColor: theme.backgroundSelected },
-                            isSelected && { backgroundColor: '#D81921', borderColor: '#D81921' },
+                            isSelected && { backgroundColor: '#dfb15b', borderColor: '#dfb15b' },
                           ]}
                           onPress={() => setSelectedClass(cls)}>
                           <ThemedText style={styles.cardEmoji}>{cls.emoji}</ThemedText>
@@ -493,7 +500,7 @@ export function CharacterView() {
                       Ability Scores
                     </ThemedText>
                     <Pressable onPress={rollAllStats}>
-                      <ThemedText type="smallBold" style={{ color: '#D81921' }}>
+                      <ThemedText type="smallBold" style={{ color: '#dfb15b' }}>
                         🎲 Roll (4d6 drop lowest)
                       </ThemedText>
                     </Pressable>
@@ -553,7 +560,7 @@ export function CharacterView() {
                     <ThemedText type="subtitle" style={styles.sheetName}>
                       {selectedChar.name}
                     </ThemedText>
-                    <ThemedText type="smallBold" style={{ color: '#D81921' }}>
+                    <ThemedText type="smallBold" style={{ color: '#dfb15b' }}>
                       Level 1 {selectedChar.race} {selectedChar.class}
                     </ThemedText>
                   </View>
@@ -572,7 +579,7 @@ export function CharacterView() {
                 <View style={styles.coreStatsRow}>
                   <ThemedView type="backgroundElement" style={styles.coreStatCard}>
                     <ThemedText type="small" themeColor="textSecondary">HIT POINTS</ThemedText>
-                    <ThemedText type="title" style={{ color: '#D81921', fontSize: 28 }}>{selectedChar.hp}</ThemedText>
+                    <ThemedText type="title" style={{ color: '#dfb15b', fontSize: 28 }}>{selectedChar.hp}</ThemedText>
                   </ThemedView>
                   <ThemedView type="backgroundElement" style={styles.coreStatCard}>
                     <ThemedText type="small" themeColor="textSecondary">SPEED</ThemedText>
@@ -633,7 +640,7 @@ export function CharacterView() {
                     style={[
                       styles.charListItem,
                       { borderColor: theme.backgroundSelected },
-                      item.id === selectedCharId && { borderColor: '#D81921' },
+                      item.id === selectedCharId && { borderColor: '#dfb15b' },
                     ]}>
                     <View style={styles.partyItemLeft}>
                       <View style={styles.partyAvatar}>
@@ -656,7 +663,7 @@ export function CharacterView() {
                           pressed && { opacity: 0.8 },
                         ]}
                         onPress={() => setSelectedCharId(item.id)}>
-                        <ThemedText style={{ fontSize: 11, color: '#D81921', fontWeight: 'bold' }}>Load</ThemedText>
+                        <ThemedText style={{ fontSize: 11, color: '#dfb15b', fontWeight: 'bold' }}>Load</ThemedText>
                       </Pressable>
                       <Pressable
                         style={({ pressed }) => [styles.partyDeleteBtn, pressed && { opacity: 0.7 }]}
@@ -691,7 +698,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: 'bold',
-    color: '#D81921',
+    color: '#dfb15b',
   },
   subtitle: {
     paddingHorizontal: Spacing.four,
@@ -707,7 +714,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(216, 25, 33, 0.4)',
   },
   randomBtnText: {
-    color: '#D81921',
+    color: '#dfb15b',
     fontWeight: 'bold',
     fontSize: 12,
   },
@@ -715,7 +722,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one,
     paddingHorizontal: Spacing.two,
     borderRadius: Spacing.two,
-    backgroundColor: '#D81921',
+    backgroundColor: '#dfb15b',
   },
   createBtnText: {
     color: '#fff',
@@ -793,7 +800,7 @@ const styles = StyleSheet.create({
   },
   activeTabBtn: {
     borderBottomWidth: 2,
-    borderBottomColor: '#D81921',
+    borderBottomColor: '#dfb15b',
   },
   tabBtnText: {
     fontSize: 12,
@@ -801,7 +808,7 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   activeTabBtnText: {
-    color: '#D81921',
+    color: '#dfb15b',
   },
   tabContent: {
     flex: 1,
@@ -822,7 +829,7 @@ const styles = StyleSheet.create({
   },
   formSectionTitle: {
     fontSize: 16,
-    color: '#D81921',
+    color: '#dfb15b',
   },
   formGroup: {
     gap: Spacing.one,
@@ -942,7 +949,7 @@ const styles = StyleSheet.create({
   },
   subTitle: {
     fontSize: 14,
-    color: '#D81921',
+    color: '#dfb15b',
     marginBottom: Spacing.two,
   },
   abilitiesGrid: {
@@ -975,7 +982,7 @@ const styles = StyleSheet.create({
   modText: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#D81921',
+    color: '#dfb15b',
   },
   savesContainer: {
     gap: Spacing.one,
@@ -985,7 +992,7 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   saveTag: {
-    backgroundColor: '#D81921',
+    backgroundColor: '#dfb15b',
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
     borderRadius: Spacing.one,

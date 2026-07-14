@@ -212,7 +212,7 @@ export default function HomeScreen() {
         {/* Dice Roller: HIDE on web, SHOW on native mobile */}
         {Platform.OS !== 'web' && (
           <ThemedView type="backgroundElement" style={styles.diceContainer}>
-            <ThemedText type="smallBold" style={{ color: '#D81921', fontSize: 15 }}>
+            <ThemedText type="smallBold" style={{ color: '#dfb15b', fontSize: 15 }}>
               🎲 Dice Roller (Mobile Companion)
             </ThemedText>
             <View style={styles.diceRow}>
@@ -303,10 +303,10 @@ const styles = StyleSheet.create({
   },
   navBar: {
     height: 56,
-    backgroundColor: '#151515',
+    backgroundColor: '#08080a',
     justifyContent: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#222222',
+    borderBottomColor: '#1d1d21',
   },
   navContainer: {
     flexDirection: 'row',
@@ -326,18 +326,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
-    backgroundColor: '#252525',
+    backgroundColor: '#121215',
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.one,
-    borderRadius: Spacing.four,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#1d1d21',
   },
   userAvatar: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#D81921',
+    backgroundColor: '#dfb15b',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   redBox: {
-    backgroundColor: '#D81921',
+    backgroundColor: '#dfb15b',
     paddingHorizontal: Spacing.one,
     paddingVertical: 2,
     borderRadius: Spacing.one,
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   },
   navLinkBtnActive: {
     borderBottomWidth: 2,
-    borderBottomColor: '#D81921',
+    borderBottomColor: '#dfb15b',
   },
   navLinkLabel: {
     fontSize: 13,
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
     marginVertical: Spacing.one,
   },
   primaryBtn: {
-    backgroundColor: '#D81921',
+    backgroundColor: '#dfb15b',
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.four,
     borderRadius: Spacing.two,
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
   headlinePhrase: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#D81921',
+    color: '#dfb15b',
     textDecorationLine: 'underline',
   },
   jsonPreview: {
@@ -525,7 +525,12 @@ const styles = StyleSheet.create({
   },
   cardHover: {
     transform: [{ translateY: -2 }],
-    borderColor: '#D81921',
+    borderColor: '#dfb15b',
+    shadowColor: '#dfb15b',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 5,
   },
   cardPress: {
     opacity: 0.9,
@@ -565,11 +570,11 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one,
     borderRadius: Spacing.one,
     borderWidth: 1,
-    borderColor: '#D81921',
+    borderColor: '#dfb15b',
     backgroundColor: 'rgba(216, 25, 33, 0.05)',
   },
   dieBtnText: {
-    color: '#D81921',
+    color: '#dfb15b',
     fontWeight: 'bold',
     fontSize: 12,
   },
