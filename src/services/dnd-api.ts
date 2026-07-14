@@ -1,14 +1,5 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import {
-  EXPANDED_SPELLS,
-  EXPANDED_RACES,
-  EXPANDED_CLASSES,
-  EXPANDED_BACKGROUNDS,
-  EXPANDED_FEATS,
-  EXPANDED_EQUIPMENT,
-  EXPANDED_MAGIC_ITEMS,
-} from './dnd-static-data';
 
 export interface DndListItem {
   index: string;
@@ -101,53 +92,33 @@ const getBaseUrl = () => {
 
 const BASE_URL = getBaseUrl();
 
-// Helper to convert data record to List Items
-function toList(data: Record<string, any>): DndListItem[] {
-  return Object.values(data).map((item) => ({
-    index: item.index,
-    name: item.name,
-    level: item.level,
-  }));
-}
-
 // ────────────────────────────────────────────────────────────────────────────
-// BACKEND API CLIENT WITH STATIC FALLBACKS
+// SUPABASE BACKEND ONLY API CLIENT
 // ────────────────────────────────────────────────────────────────────────────
 
 export const dndApi = {
-  // Generic fetch wrapper with fallback
-  fetchCollection: async (type: string, staticData: Record<string, any>): Promise<DndListItem[]> => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/${type}`);
-      if (response.ok) {
-        return await response.json();
-      }
-    } catch (e) {
-      console.warn(`[dndApi] API call failed for '${type}'. Falling back to local static data.`, e);
+  fetchCollection: async (type: string): Promise<DndListItem[]> => {
+    const response = await fetch(`${BASE_URL}/api/${type}`);
+    if (!response.ok) {
+      throw new Error(`[dndApi] Failed to fetch collection '${type}' from backend: status ${response.status}`);
     }
-    return toList(staticData);
+    return response.json();
   },
 
-  fetchDetails: async (type: string, index: string, staticData: Record<string, any>): Promise<any> => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/${type}/${index}`);
-      if (response.ok) {
-        return await response.json();
-      }
-    } catch (e) {
-      console.warn(`[dndApi] API details call failed for '${type}/${index}'. Falling back to local static details.`, e);
+  fetchDetails: async (type: string, index: string): Promise<any> => {
+    const response = await fetch(`${BASE_URL}/api/${type}/${index}`);
+    if (!response.ok) {
+      throw new Error(`[dndApi] Failed to fetch details for '${type}/${index}' from backend: status ${response.status}`);
     }
-    const item = staticData[index];
-    if (!item) return Promise.reject(new Error(`Item '${index}' not found in static ${type}`));
-    return item;
+    return response.json();
   },
 
   getSpells: async (): Promise<DndListItem[]> => {
-    return dndApi.fetchCollection('spells', EXPANDED_SPELLS);
+    return dndApi.fetchCollection('spells');
   },
 
   getSpellDetails: async (index: string): Promise<SpellDetails> => {
-    return dndApi.fetchDetails('spells', index, EXPANDED_SPELLS);
+    return dndApi.fetchDetails('spells', index);
   },
 
   getMonsters: async (): Promise<DndListItem[]> => {
@@ -160,50 +131,50 @@ export const dndApi = {
   },
 
   getClasses: async (): Promise<DndListItem[]> => {
-    return dndApi.fetchCollection('classes', EXPANDED_CLASSES);
+    return dndApi.fetchCollection('classes');
   },
 
   getClassDetails: async (index: string): Promise<ClassDetails> => {
-    return dndApi.fetchDetails('classes', index, EXPANDED_CLASSES);
+    return dndApi.fetchDetails('classes', index);
   },
 
   getRaces: async (): Promise<DndListItem[]> => {
-    return dndApi.fetchCollection('races', EXPANDED_RACES);
+    return dndApi.fetchCollection('races');
   },
 
   getRaceDetails: async (index: string): Promise<RaceDetails> => {
-    return dndApi.fetchDetails('races', index, EXPANDED_RACES);
+    return dndApi.fetchDetails('races', index);
   },
 
   getBackgrounds: async (): Promise<DndListItem[]> => {
-    return dndApi.fetchCollection('backgrounds', EXPANDED_BACKGROUNDS);
+    return dndApi.fetchCollection('backgrounds');
   },
 
   getBackgroundDetails: async (index: string): Promise<any> => {
-    return dndApi.fetchDetails('backgrounds', index, EXPANDED_BACKGROUNDS);
+    return dndApi.fetchDetails('backgrounds', index);
   },
 
   getFeats: async (): Promise<DndListItem[]> => {
-    return dndApi.fetchCollection('feats', EXPANDED_FEATS);
+    return dndApi.fetchCollection('feats');
   },
 
   getFeatDetails: async (index: string): Promise<any> => {
-    return dndApi.fetchDetails('feats', index, EXPANDED_FEATS);
+    return dndApi.fetchDetails('feats', index);
   },
 
   getEquipment: async (): Promise<DndListItem[]> => {
-    return dndApi.fetchCollection('equipment', EXPANDED_EQUIPMENT);
+    return dndApi.fetchCollection('equipment');
   },
 
   getEquipmentDetails: async (index: string): Promise<any> => {
-    return dndApi.fetchDetails('equipment', index, EXPANDED_EQUIPMENT);
+    return dndApi.fetchDetails('equipment', index);
   },
 
   getMagicItems: async (): Promise<DndListItem[]> => {
-    return dndApi.fetchCollection('magic-items', EXPANDED_MAGIC_ITEMS);
+    return dndApi.fetchCollection('magic-items');
   },
 
   getMagicItemDetails: async (index: string): Promise<any> => {
-    return dndApi.fetchDetails('magic-items', index, EXPANDED_MAGIC_ITEMS);
+    return dndApi.fetchDetails('magic-items', index);
   },
 };

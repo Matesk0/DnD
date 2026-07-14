@@ -14,11 +14,11 @@ import { ThemedView } from '@/components/themed-view';
 import { PlayView } from '@/components/play-view';
 import { CharacterView } from '@/components/character-view';
 import { NotesView } from '@/components/notes-view';
-import { CompendiumView } from '@/components/compendium-view';
+import { RulebookView } from '@/components/rulebook-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-type TabSection = 'home' | 'play' | 'character' | 'notes' | 'compendium';
+type TabSection = 'home' | 'play' | 'character' | 'notes' | 'rulebook';
 
 // Dice Roller State for native platforms only
 interface RollLog {
@@ -70,7 +70,7 @@ export default function HomeScreen() {
       { id: 'play', label: 'Play' },
       { id: 'character', label: 'Character' },
       { id: 'notes', label: 'Notes' },
-      { id: 'compendium', label: 'Compendium' },
+      { id: 'rulebook', label: 'Rulebook' },
     ];
 
     return (
@@ -107,8 +107,8 @@ export default function HomeScreen() {
         return <CharacterView />;
       case 'notes':
         return <NotesView />;
-      case 'compendium':
-        return <CompendiumView />;
+      case 'rulebook':
+        return <RulebookView />;
       default:
         return renderHomeTab();
     }
@@ -189,7 +189,7 @@ export default function HomeScreen() {
               </ThemedText>
             </Pressable>
 
-            {/* Compendium Rules */}
+            {/* Rulebook */}
             <Pressable
               style={(state: any) => [
                 styles.hubCard,
@@ -197,10 +197,10 @@ export default function HomeScreen() {
                 state.hovered && styles.cardHover,
                 state.pressed && styles.cardPress,
               ]}
-              onPress={() => setActiveTab('compendium')}>
+              onPress={() => setActiveTab('rulebook')}>
               <ThemedText style={styles.hubCardEmoji}>📚</ThemedText>
               <ThemedText type="smallBold" style={styles.hubCardTitle}>
-                Rules Library
+                Rulebook
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.hubCardDesc}>
                 Search Spells, Races, Backgrounds, Feats, UA, and Homebrews.

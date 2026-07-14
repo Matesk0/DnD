@@ -1,8 +1,5 @@
 import { createSupabaseContext } from '@supabase/server';
 import {
-  getLocalDb,
-  getLocalCollection,
-  saveLocalDb,
   fetchFromSupabase,
   upsertToSupabase,
   deleteFromSupabase,
@@ -22,33 +19,31 @@ export async function GET(
   request: Request,
   { type, index }: { type: string; index: string }
 ) {
-  // Try retrieving details from Supabase first
   try {
-    const { data: ctx } = await createSupabaseContext(request, { auth: 'publishable' });
-    if (ctx?.supabase) {
-      const supabaseData = await fetchFromSupabase(type, ctx.supabase);
-      if (supabaseData) {
-        const item = supabaseData.find((i: any) => i.index === index);
-        if (item) {
-          return Response.json(item, { headers: corsHeaders });
-        }
-      }
+    const { data: ctx, error: authError } = await createSupabaseContext(request, { auth: 'publishable' });
+    if (authError || !ctx?.supabase) {
+      return Response.json(
+        { error: authError?.message || 'Unauthorized context' },
+        { status: 401, headers: corsHeaders }
+      );
     }
-  } catch (err) {
-    console.warn('[API] Supabase details retrieval failed, falling back to local DB:', err);
-  }
 
-  // Local fallback
-  const localCollection = getLocalCollection(type);
-  const item = localCollection[index];
-  if (!item) {
+    const supabaseData = await fetchFromSupabase(type, ctx.supabase);
+    const item = supabaseData.find((i: any) => i.index === index);
+    if (!item) {
+      return Response.json(
+        { error: `Item '${index}' not found in '${type}'` },
+        { status: 404, headers: corsHeaders }
+      );
+    }
+    
+    return Response.json(item, { headers: corsHeaders });
+  } catch (err: any) {
     return Response.json(
-      { error: `Item '${index}' not found in '${type}'` },
-      { status: 404, headers: corsHeaders }
+      { error: err.message || 'Internal Server Error' },
+      { status: 500, headers: corsHeaders }
     );
   }
-  
-  return Response.json(item, { headers: corsHeaders });
 }
 
 export async function PUT(
@@ -58,29 +53,15 @@ export async function PUT(
   try {
     const item = await request.json();
     
-    // Try updating in Supabase first
-    try {
-      const { data: ctx } = await createSupabaseContext(request, { auth: 'publishable' });
-      if (ctx?.supabase) {
-        const success = await upsertToSupabase(type, { ...item, index }, ctx.supabase);
-        if (success) {
-          return Response.json({ ...item, index }, { headers: corsHeaders });
-        }
-      }
-    } catch (err) {
-      console.warn('[API] Supabase details update failed, writing to local DB:', err);
+    const { data: ctx, error: authError } = await createSupabaseContext(request, { auth: 'publishable' });
+    if (authError || !ctx?.supabase) {
+      return Response.json(
+        { error: authError?.message || 'Unauthorized context' },
+        { status: 401, headers: corsHeaders }
+      );
     }
 
-    // Local fallback
-    const db = getLocalDb();
-    let normType = type;
-    if (type === 'magic-items') normType = 'magic_items';
-    
-    const collection = db[normType as keyof typeof db];
-    if (collection) {
-      collection[index] = { ...item, index };
-      saveLocalDb(db);
-    }
+    await upsertToSupabase(type, { ...item, index }, ctx.supabase);
     
     return Response.json({ ...item, index }, { headers: corsHeaders });
   } catch (error: any) {
@@ -102,33 +83,22 @@ export async function DELETE(
   request: Request,
   { type, index }: { type: string; index: string }
 ) {
-  // Try deleting from Supabase first
   try {
-    const { data: ctx } = await createSupabaseContext(request, { auth: 'publishable' });
-    if (ctx?.supabase) {
-      const success = await deleteFromSupabase(type, index, ctx.supabase);
-      if (success) {
-        return new Response(null, { status: 204, headers: corsHeaders });
-      }
+    const { data: ctx, error: authError } = await createSupabaseContext(request, { auth: 'publishable' });
+    if (authError || !ctx?.supabase) {
+      return Response.json(
+        { error: authError?.message || 'Unauthorized context' },
+        { status: 401, headers: corsHeaders }
+      );
     }
-  } catch (err) {
-    console.warn('[API] Supabase delete failed, removing from local DB:', err);
-  }
 
-  // Local fallback
-  const db = getLocalDb();
-  let normType = type;
-  if (type === 'magic-items') normType = 'magic_items';
-  
-  const collection = db[normType as keyof typeof db];
-  if (collection && collection[index]) {
-    delete collection[index];
-    saveLocalDb(db);
+    await deleteFromSupabase(type, index, ctx.supabase);
+    
     return new Response(null, { status: 204, headers: corsHeaders });
+  } catch (error: any) {
+    return Response.json(
+      { error: error.message || 'Internal Server Error' },
+      { status: 500, headers: corsHeaders }
+    );
   }
-  
-  return Response.json(
-    { error: `Item '${index}' not found in '${type}'` },
-    { status: 404, headers: corsHeaders }
-  );
 }

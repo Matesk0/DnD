@@ -18,7 +18,7 @@ import { LoadingSpinner } from './loading-spinner';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-type CompendiumSection =
+type RulebookSection =
   | 'menu'
   | 'spells'
   | 'races'
@@ -32,15 +32,15 @@ type CompendiumSection =
   | 'homebrew'
   | 'ua';
 
-interface CompendiumItem {
-  id: CompendiumSection;
+interface RulebookItem {
+  id: RulebookSection;
   title: string;
   emoji: string;
   desc: string;
   source: 'api' | 'static';
 }
 
-const COMPENDIUM_SECTIONS: CompendiumItem[] = [
+const RULEBOOK_SECTIONS: RulebookItem[] = [
   { id: 'spells', title: 'Spells', emoji: '🪄', desc: 'Browse all official spell descriptions, levels, and magic schools.', source: 'api' },
   { id: 'races', title: 'Races', emoji: '🧝', desc: 'View racial adjustments, size, speeds, and ancestral traits.', source: 'api' },
   { id: 'classes', title: 'Classes', emoji: '🛡️', desc: 'Inspect class hit dice, saving throws, and subclasses.', source: 'api' },
@@ -54,12 +54,12 @@ const COMPENDIUM_SECTIONS: CompendiumItem[] = [
   { id: 'ua', title: 'Unearthed Arcana', emoji: '🌌', desc: 'Review official playtest subclasses and test features.', source: 'static' },
 ];
 
-export function CompendiumView() {
+export function RulebookView() {
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 700;
 
-  const [activeSection, setActiveSection] = useState<CompendiumSection>('menu');
+  const [activeSection, setActiveSection] = useState<RulebookSection>('menu');
 
   // Generic List State for Backgrounds, Feats, Items (Equipment/Magic Items)
   const [listData, setListData] = useState<DndListItem[]>([]);
@@ -101,7 +101,7 @@ export function CompendiumView() {
         }
         setListData(data);
       } catch (err) {
-        console.error('Failed to load list in compendium:', err);
+        console.error('Failed to load list in rulebook:', err);
       } finally {
         setLoadingList(false);
       }
@@ -136,7 +136,7 @@ export function CompendiumView() {
         }
         setDetailsData(data);
       } catch (err) {
-        console.error('Failed to load details in compendium:', err);
+        console.error('Failed to load details in rulebook:', err);
       } finally {
         setLoadingDetails(false);
       }
@@ -275,7 +275,7 @@ export function CompendiumView() {
             </ThemedText>
           </Pressable>
           <ThemedText type="subtitle" style={styles.listTitle}>
-            {COMPENDIUM_SECTIONS.find((s) => s.id === activeSection)?.emoji} {COMPENDIUM_SECTIONS.find((s) => s.id === activeSection)?.title}
+            {RULEBOOK_SECTIONS.find((s) => s.id === activeSection)?.emoji} {RULEBOOK_SECTIONS.find((s) => s.id === activeSection)?.title}
           </ThemedText>
         </View>
 
@@ -377,7 +377,7 @@ export function CompendiumView() {
       <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.menuScroll}>
         <View style={styles.menuHeader}>
           <ThemedText type="subtitle" style={styles.title}>
-            📚 Rules & Content Library
+            📚 D&D 5E Rulebook
           </ThemedText>
           <ThemedText style={styles.tagline} themeColor="textSecondary">
             Consult the archives of D&D 5th Edition. Browse through official SRD datasets, playtest documents, and homebrew design modules.
@@ -385,7 +385,7 @@ export function CompendiumView() {
         </View>
 
         <View style={styles.grid}>
-          {COMPENDIUM_SECTIONS.map((sec) => (
+          {RULEBOOK_SECTIONS.map((sec) => (
             <Pressable
               key={sec.id}
               style={(state: any) => [
