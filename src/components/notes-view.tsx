@@ -12,6 +12,8 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { Lineicons } from '@lineiconshq/react-native-lineicons';
+import { Book1Stroke, Pencil1Stroke, PlusStroke, Trash3Stroke, XmarkStroke, Home2Stroke } from '@lineiconshq/free-icons';
 
 interface Note {
   id: string;
@@ -419,17 +421,26 @@ export function NotesView() {
             setSelectedCampaignId(null);
             setActiveNoteId(null);
           }}>
-          <ThemedText style={styles.toolbarBtnText}>← Campaigns</ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Lineicons icon={Home2Stroke} size={14} color="#dfb15b" />
+            <ThemedText style={styles.toolbarBtnText}>Campaigns</ThemedText>
+          </View>
         </Pressable>
 
-        <ThemedText type="smallBold" style={styles.toolbarTitle}>
-          {activeCampaign?.emoji} {activeCampaign?.title}
-        </ThemedText>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Lineicons icon={Book1Stroke} size={16} color="#dfb15b" />
+          <ThemedText type="smallBold" style={styles.toolbarTitle}>
+            {activeCampaign?.title}
+          </ThemedText>
+        </View>
 
         <Pressable
           style={({ pressed }) => [styles.addNoteBtn, pressed && { opacity: 0.8 }]}
           onPress={handleCreateNote}>
-          <ThemedText style={styles.toolbarBtnText}>+ Add Note Node</ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Lineicons icon={PlusStroke} size={14} color="#fff" />
+            <ThemedText style={styles.toolbarBtnText}>Add Note</ThemedText>
+          </View>
         </Pressable>
       </View>
 
@@ -512,19 +523,25 @@ export function NotesView() {
           <ThemedView type="backgroundElement" style={styles.modalContent}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
-              <ThemedText type="smallBold" style={{ color: '#dfb15b' }}>
-                {noteEditMode ? '📝 Editing Note' : '📖 Reading Note'}
-              </ThemedText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Lineicons icon={noteEditMode ? Pencil1Stroke : Book1Stroke} size={15} color="#dfb15b" />
+                <ThemedText type="smallBold" style={{ color: '#dfb15b' }}>
+                  {noteEditMode ? 'Editing Note' : 'Reading Note'}
+                </ThemedText>
+              </View>
               <View style={styles.modalHeaderActions}>
                 <Pressable
                   style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.8 }]}
                   onPress={handleDeleteNote}>
-                  <ThemedText style={styles.deleteBtnText}>🗑️ Delete</ThemedText>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Lineicons icon={Trash3Stroke} size={12} color="#e53e3e" />
+                    <ThemedText style={styles.deleteBtnText}>Delete</ThemedText>
+                  </View>
                 </Pressable>
                 <Pressable
                   style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.8 }]}
                   onPress={() => setActiveNoteId(null)}>
-                  <ThemedText style={{ color: '#aaa', fontWeight: 'bold' }}>✕</ThemedText>
+                  <Lineicons icon={XmarkStroke} size={14} color="#aaa" />
                 </Pressable>
               </View>
             </View>

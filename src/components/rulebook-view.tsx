@@ -17,6 +17,18 @@ import { ThemedView } from './themed-view';
 import { LoadingSpinner } from './loading-spinner';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { Lineicons } from '@lineiconshq/react-native-lineicons';
+import {
+  Book1Stroke,
+  Pencil1Stroke,
+  User4Stroke,
+  UserMultiple4Stroke,
+  Shield2Stroke,
+  Trophy1Stroke,
+  MagicOutlined,
+  Home2Stroke,
+  PlusStroke
+} from '@lineiconshq/free-icons';
 
 type RulebookSection =
   | 'menu'
@@ -35,22 +47,22 @@ type RulebookSection =
 interface RulebookItem {
   id: RulebookSection;
   title: string;
-  emoji: string;
+  icon: any;
   desc: string;
 }
 
 const RULEBOOK_SECTIONS: RulebookItem[] = [
-  { id: 'spells', title: 'Spells', emoji: '🪄', desc: 'Browse all official spell descriptions, levels, and magic schools.' },
-  { id: 'races', title: 'Races', emoji: '🧝', desc: 'View racial adjustments, size, speeds, and ancestral traits.' },
-  { id: 'classes', title: 'Classes', emoji: '🛡️', desc: 'Inspect class hit dice, saving throws, and subclasses.' },
-  { id: 'backgrounds', title: 'Backgrounds', emoji: '📜', desc: 'Acquire proficiencies and feature tables from character origins.' },
-  { id: 'items', title: 'Items & Magic Loot', emoji: '⚔️', desc: 'Inspect general weapons, armor, tools, and enchanted magic items.' },
-  { id: 'feats', title: 'Feats', emoji: '⚡', desc: 'Search custom training advantages and requirements.' },
-  { id: 'chronicles', title: 'Heroic Chronicles', emoji: '📖', desc: 'Flesh out family histories, ally relations, and fated prophecies.' },
-  { id: 'racial_feats', title: 'Racial Feats', emoji: '🧬', desc: 'Ancestry-specific feats (e.g. Elven Accuracy, Bountiful Luck).' },
-  { id: 'misc', title: 'Miscellaneous Rules', emoji: '⚙️', desc: 'Review active conditions, combat actions, and stats variables.' },
-  { id: 'homebrew', title: 'Homebrew Workshop', emoji: '🧪', desc: 'Create and log your own custom homebrew creations.' },
-  { id: 'ua', title: 'Unearthed Arcana', emoji: '🌌', desc: 'Review official playtest subclasses and test features.' },
+  { id: 'spells', title: 'Spells', icon: MagicOutlined, desc: 'Browse all official spell descriptions, levels, and magic schools.' },
+  { id: 'races', title: 'Races', icon: User4Stroke, desc: 'View racial adjustments, size, speeds, and ancestral traits.' },
+  { id: 'classes', title: 'Classes', icon: Shield2Stroke, desc: 'Inspect class hit dice, saving throws, and subclasses.' },
+  { id: 'backgrounds', title: 'Backgrounds', icon: Book1Stroke, desc: 'Acquire proficiencies and feature tables from character origins.' },
+  { id: 'items', title: 'Items & Magic Loot', icon: Trophy1Stroke, desc: 'Inspect general weapons, armor, tools, and enchanted magic items.' },
+  { id: 'feats', title: 'Feats', icon: Trophy1Stroke, desc: 'Search custom training advantages and requirements.' },
+  { id: 'chronicles', title: 'Heroic Chronicles', icon: Book1Stroke, desc: 'Flesh out family histories, ally relations, and fated prophecies.' },
+  { id: 'racial_feats', title: 'Racial Feats', icon: UserMultiple4Stroke, desc: 'Ancestry-specific feats (e.g. Elven Accuracy, Bountiful Luck).' },
+  { id: 'misc', title: 'Miscellaneous Rules', icon: Home2Stroke, desc: 'Review active conditions, combat actions, and stats variables.' },
+  { id: 'homebrew', title: 'Homebrew Workshop', icon: Pencil1Stroke, desc: 'Create and log your own custom homebrew creations.' },
+  { id: 'ua', title: 'Unearthed Arcana', icon: Book1Stroke, desc: 'Review official playtest subclasses and test features.' },
 ];
 
 export function RulebookView() {
@@ -308,9 +320,15 @@ export function RulebookView() {
               {selectedItemIndex && !isLargeScreen ? '← Back to List' : '← Library Menu'}
             </ThemedText>
           </Pressable>
-          <ThemedText type="subtitle" style={styles.listTitle}>
-            {RULEBOOK_SECTIONS.find((s) => s.id === activeSection)?.emoji} {RULEBOOK_SECTIONS.find((s) => s.id === activeSection)?.title}
-          </ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {(() => {
+              const sec = RULEBOOK_SECTIONS.find((s) => s.id === activeSection);
+              return sec ? <Lineicons icon={sec.icon} size={20} color="#dfb15b" /> : null;
+            })()}
+            <ThemedText type="subtitle" style={styles.listTitle}>
+              {RULEBOOK_SECTIONS.find((s) => s.id === activeSection)?.title}
+            </ThemedText>
+          </View>
         </View>
 
         {selectedItemIndex && !isLargeScreen ? (
@@ -416,7 +434,9 @@ export function RulebookView() {
                 setSearchQuery('');
               }}>
               <View style={styles.cardHeader}>
-                <ThemedText style={styles.emoji}>{sec.emoji}</ThemedText>
+                <View style={{ marginRight: Spacing.one }}>
+                  <Lineicons icon={sec.icon} size={22} color="#dfb15b" />
+                </View>
                 <View>
                   <ThemedText type="smallBold" style={styles.cardTitle}>
                     {sec.title}

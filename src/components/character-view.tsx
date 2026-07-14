@@ -13,6 +13,8 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { Lineicons } from '@lineiconshq/react-native-lineicons';
+import { Book1Stroke, Pencil1Stroke, UserMultiple4Stroke, User4Stroke } from '@lineiconshq/free-icons';
 
 interface Character {
   id: string;
@@ -394,23 +396,32 @@ export function CharacterView() {
           <Pressable
             style={[styles.tabBtn, activeSubTab === 'sheet' && styles.activeTabBtn]}
             onPress={() => setActiveSubTab('sheet')}>
-            <ThemedText style={[styles.tabBtnText, activeSubTab === 'sheet' && styles.activeTabBtnText]}>
-              📜 Sheet
-            </ThemedText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Lineicons icon={Book1Stroke} size={14} color={activeSubTab === 'sheet' ? '#dfb15b' : '#888'} />
+              <ThemedText style={[styles.tabBtnText, activeSubTab === 'sheet' && styles.activeTabBtnText]}>
+                Sheet
+              </ThemedText>
+            </View>
           </Pressable>
           <Pressable
             style={[styles.tabBtn, activeSubTab === 'builder' && styles.activeTabBtn]}
             onPress={() => setActiveSubTab('builder')}>
-            <ThemedText style={[styles.tabBtnText, activeSubTab === 'builder' && styles.activeTabBtnText]}>
-              🛠️ Editor
-            </ThemedText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Lineicons icon={Pencil1Stroke} size={14} color={activeSubTab === 'builder' ? '#dfb15b' : '#888'} />
+              <ThemedText style={[styles.tabBtnText, activeSubTab === 'builder' && styles.activeTabBtnText]}>
+                Editor
+              </ThemedText>
+            </View>
           </Pressable>
           <Pressable
             style={[styles.tabBtn, activeSubTab === 'party' && styles.activeTabBtn]}
             onPress={() => setActiveSubTab('party')}>
-            <ThemedText style={[styles.tabBtnText, activeSubTab === 'party' && styles.activeTabBtnText]}>
-              👥 Party ({characters.length})
-            </ThemedText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Lineicons icon={UserMultiple4Stroke} size={14} color={activeSubTab === 'party' ? '#dfb15b' : '#888'} />
+              <ThemedText style={[styles.tabBtnText, activeSubTab === 'party' && styles.activeTabBtnText]}>
+                Party ({characters.length})
+              </ThemedText>
+            </View>
           </Pressable>
         </View>
       )}

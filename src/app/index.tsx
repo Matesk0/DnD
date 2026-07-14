@@ -17,6 +17,8 @@ import { NotesView } from '@/components/notes-view';
 import { RulebookView } from '@/components/rulebook-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { Lineicons } from '@lineiconshq/react-native-lineicons';
+import { GamePadModern1Stroke, User4Stroke, Pencil1Stroke, Book1Stroke } from '@lineiconshq/free-icons';
 
 type TabSection = 'home' | 'play' | 'character' | 'notes' | 'rulebook';
 
@@ -144,7 +146,9 @@ export default function HomeScreen() {
                 state.pressed && styles.cardPress,
               ]}
               onPress={() => setActiveTab('play')}>
-              <ThemedText style={styles.hubCardEmoji}>🎮</ThemedText>
+              <View style={{ marginVertical: Spacing.two }}>
+                <Lineicons icon={GamePadModern1Stroke} size={32} color="#dfb15b" />
+              </View>
               <ThemedText type="smallBold" style={styles.hubCardTitle}>
                 Play Games
               </ThemedText>
@@ -162,7 +166,9 @@ export default function HomeScreen() {
                 state.pressed && styles.cardPress,
               ]}
               onPress={() => setActiveTab('character')}>
-              <ThemedText style={styles.hubCardEmoji}>🧙‍♂️</ThemedText>
+              <View style={{ marginVertical: Spacing.two }}>
+                <Lineicons icon={User4Stroke} size={32} color="#dfb15b" />
+              </View>
               <ThemedText type="smallBold" style={styles.hubCardTitle}>
                 Character sheets
               </ThemedText>
@@ -180,7 +186,9 @@ export default function HomeScreen() {
                 state.pressed && styles.cardPress,
               ]}
               onPress={() => setActiveTab('notes')}>
-              <ThemedText style={styles.hubCardEmoji}>📝</ThemedText>
+              <View style={{ marginVertical: Spacing.two }}>
+                <Lineicons icon={Pencil1Stroke} size={32} color="#dfb15b" />
+              </View>
               <ThemedText type="smallBold" style={styles.hubCardTitle}>
                 Adventure Journal
               </ThemedText>
@@ -198,7 +206,9 @@ export default function HomeScreen() {
                 state.pressed && styles.cardPress,
               ]}
               onPress={() => setActiveTab('rulebook')}>
-              <ThemedText style={styles.hubCardEmoji}>📚</ThemedText>
+              <View style={{ marginVertical: Spacing.two }}>
+                <Lineicons icon={Book1Stroke} size={32} color="#dfb15b" />
+              </View>
               <ThemedText type="smallBold" style={styles.hubCardTitle}>
                 Rulebook
               </ThemedText>
