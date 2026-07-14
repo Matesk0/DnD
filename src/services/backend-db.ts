@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { createSupabaseContext } from '@supabase/server';
 import {
   EXPANDED_SPELLS,
   EXPANDED_RACES,
@@ -34,7 +35,11 @@ const defaultDb: DbSchema = {
 
 let inMemoryDb: DbSchema | null = null;
 
-export function getDb(): DbSchema {
+// ────────────────────────────────────────────────────────────────────────────
+// LOCAL FILE-BASED BACKEND OPERATIONS
+// ────────────────────────────────────────────────────────────────────────────
+
+export function getLocalDb(): DbSchema {
   if (inMemoryDb) {
     return inMemoryDb;
   }
@@ -46,10 +51,9 @@ export function getDb(): DbSchema {
       return inMemoryDb!;
     }
   } catch (error) {
-    console.error('Failed to read database file, falling back to static/in-memory:', error);
+    console.error('Failed to read local database file, falling back to static:', error);
   }
 
-  // Initialize and write database file if it doesn't exist
   inMemoryDb = JSON.parse(JSON.stringify(defaultDb));
   try {
     const dir = path.dirname(DB_FILE_PATH);
@@ -58,13 +62,13 @@ export function getDb(): DbSchema {
     }
     fs.writeFileSync(DB_FILE_PATH, JSON.stringify(inMemoryDb, null, 2), 'utf-8');
   } catch (error) {
-    console.error('Failed to write initial database file:', error);
+    console.error('Failed to write initial local database file:', error);
   }
 
   return inMemoryDb!;
 }
 
-export function saveDb(db: DbSchema) {
+export function saveLocalDb(db: DbSchema) {
   inMemoryDb = db;
   try {
     const dir = path.dirname(DB_FILE_PATH);
@@ -73,6 +77,98 @@ export function saveDb(db: DbSchema) {
     }
     fs.writeFileSync(DB_FILE_PATH, JSON.stringify(db, null, 2), 'utf-8');
   } catch (error) {
-    console.error('Failed to write database file:', error);
+    console.error('Failed to write local database file:', error);
   }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// SUPABASE BACKEND SYNCHRONIZATION HELPERS
+// ────────────────────────────────────────────────────────────────────────────
+
+export async function fetchFromSupabase(type: string, supabaseClient: any): Promise<any[] | null> {
+  try {
+    let normType = type;
+    if (type === 'magic-items') normType = 'magic_items';
+
+    const { data, error } = await supabaseClient
+      .from(normType)
+      .select('*');
+
+    if (error) {
+      console.warn(`[Supabase] Error reading table '${normType}':`, error.message);
+      return null;
+    }
+
+    // Auto-seed empty tables with our expanded dataset
+    if (data && data.length === 0) {
+      console.info(`[Supabase] Table '${normType}' is empty. Seeding with expanded dataset...`);
+      const localCollection = getLocalCollection(type);
+      const itemsToInsert = Object.values(localCollection);
+      
+      const { error: seedError } = await supabaseClient
+        .from(normType)
+        .insert(itemsToInsert);
+
+      if (seedError) {
+        console.warn(`[Supabase] Failed to seed table '${normType}':`, seedError.message);
+      } else {
+        console.info(`[Supabase] Successfully seeded table '${normType}'.`);
+        return itemsToInsert;
+      }
+    }
+
+    return data;
+  } catch (err: any) {
+    console.warn(`[Supabase] Network or connection error:`, err.message || err);
+    return null;
+  }
+}
+
+export async function upsertToSupabase(type: string, item: any, supabaseClient: any): Promise<boolean> {
+  try {
+    let normType = type;
+    if (type === 'magic-items') normType = 'magic_items';
+
+    const { error } = await supabaseClient
+      .from(normType)
+      .upsert(item);
+
+    if (error) {
+      console.warn(`[Supabase] Failed to upsert to '${normType}':`, error.message);
+      return false;
+    }
+    return true;
+  } catch (err: any) {
+    console.warn(`[Supabase] Network error during upsert:`, err.message || err);
+    return false;
+  }
+}
+
+export async function deleteFromSupabase(type: string, index: string, supabaseClient: any): Promise<boolean> {
+  try {
+    let normType = type;
+    if (type === 'magic-items') normType = 'magic_items';
+
+    const { error } = await supabaseClient
+      .from(normType)
+      .delete()
+      .eq('index', index);
+
+    if (error) {
+      console.warn(`[Supabase] Failed to delete from '${normType}':`, error.message);
+      return false;
+    }
+    return true;
+  } catch (err: any) {
+    console.warn(`[Supabase] Network error during delete:`, err.message || err);
+    return false;
+  }
+}
+
+// Helper to get local collection
+export function getLocalCollection(type: string): Record<string, any> {
+  const db = getLocalDb();
+  let normType = type;
+  if (type === 'magic-items') normType = 'magic_items';
+  return db[normType as keyof DbSchema] || {};
 }

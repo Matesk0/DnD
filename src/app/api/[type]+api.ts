@@ -1,4 +1,11 @@
-import { getDb, saveDb } from '../../services/backend-db';
+import { createSupabaseContext } from '@supabase/server';
+import {
+  getLocalDb,
+  getLocalCollection,
+  saveLocalDb,
+  fetchFromSupabase,
+  upsertToSupabase,
+} from '../../services/backend-db';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,23 +18,27 @@ export function OPTIONS() {
 }
 
 export async function GET(request: Request, { type }: { type: string }) {
-  const db = getDb();
-  
-  // Normalize collection name
-  let normType = type;
-  if (type === 'magic-items') normType = 'magic_items';
-  
-  const collection = db[normType as keyof typeof db];
-  
-  if (!collection) {
-    return Response.json(
-      { error: `Collection '${type}' not found` },
-      { status: 404, headers: corsHeaders }
-    );
+  // Try retrieving from Supabase server context first
+  try {
+    const { data: ctx } = await createSupabaseContext(request, { auth: 'publishable' });
+    if (ctx?.supabase) {
+      const supabaseData = await fetchFromSupabase(type, ctx.supabase);
+      if (supabaseData) {
+        const list = supabaseData.map((item: any) => ({
+          index: item.index,
+          name: item.name,
+          level: item.level,
+        }));
+        return Response.json(list, { headers: corsHeaders });
+      }
+    }
+  } catch (err) {
+    console.warn('[API] Supabase context creation failed, falling back to local DB:', err);
   }
-  
-  // Return the items converted to list item format
-  const list = Object.values(collection).map((item: any) => ({
+
+  // Fallback to local file-based database
+  const localCollection = getLocalCollection(type);
+  const list = Object.values(localCollection).map((item: any) => ({
     index: item.index,
     name: item.name,
     level: item.level,
@@ -46,23 +57,29 @@ export async function POST(request: Request, { type }: { type: string }) {
       );
     }
     
-    const db = getDb();
-    
+    // Try saving to Supabase first
+    try {
+      const { data: ctx } = await createSupabaseContext(request, { auth: 'publishable' });
+      if (ctx?.supabase) {
+        const success = await upsertToSupabase(type, item, ctx.supabase);
+        if (success) {
+          return Response.json(item, { status: 201, headers: corsHeaders });
+        }
+      }
+    } catch (err) {
+      console.warn('[API] Supabase context save failed, writing to local DB:', err);
+    }
+
+    // Write to local database as fallback
+    const db = getLocalDb();
     let normType = type;
     if (type === 'magic-items') normType = 'magic_items';
     
     const collection = db[normType as keyof typeof db];
-    
-    if (!collection) {
-      return Response.json(
-        { error: `Collection '${type}' not found` },
-        { status: 404, headers: corsHeaders }
-      );
+    if (collection) {
+      collection[item.index] = item;
+      saveLocalDb(db);
     }
-    
-    // Add to collection
-    collection[item.index] = item;
-    saveDb(db);
     
     return Response.json(item, { status: 201, headers: corsHeaders });
   } catch (error: any) {
