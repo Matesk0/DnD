@@ -7,6 +7,12 @@
       "skillPath": "skills/api-and-interface-design/SKILL.md",
       "computedHash": "3cf54553433e55875c664baf78f9c769820bdfac155f09bf2989d70e20e6e147"
     },
+    "branch-commit-verify-merge": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".agents/skills/branch-commit-verify-merge/SKILL.md",
+      "computedHash": "dccab792e8bf952b1773250d7bdfc72bb1b5143463ff1bca32c9f717e8cb5ad9"
+    },
     "browser-testing-with-devtools": {
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
