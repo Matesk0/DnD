@@ -222,9 +222,12 @@ export default function HomeScreen() {
         {/* Dice Roller: HIDE on web, SHOW on native mobile */}
         {Platform.OS !== 'web' && (
           <ThemedView type="backgroundElement" style={styles.diceContainer}>
-            <ThemedText type="smallBold" style={{ color: '#dfb15b', fontSize: 15 }}>
-              🎲 Dice Roller (Mobile Companion)
-            </ThemedText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: Spacing.one }}>
+              <Lineicons icon={GamePadModern1Stroke} size={15} color="#dfb15b" />
+              <ThemedText type="smallBold" style={{ color: '#dfb15b', fontSize: 15 }}>
+                Dice Roller (Mobile Companion)
+              </ThemedText>
+            </View>
             <View style={styles.diceRow}>
               {[4, 6, 8, 10, 12, 20].map((sides) => (
                 <Pressable

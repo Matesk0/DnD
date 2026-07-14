@@ -11,10 +11,18 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { Lineicons } from '@lineiconshq/react-native-lineicons';
+import {
+  GamePadModern1Stroke,
+  User4Stroke,
+  Shield2Stroke,
+  Book1Stroke,
+  Home2Stroke
+} from '@lineiconshq/free-icons';
 
 interface GamePlatform {
   name: string;
-  emoji: string;
+  icon: any;
   description: string;
   tagline: string;
   url: string;
@@ -25,7 +33,7 @@ interface GamePlatform {
 const PLATFORMS: GamePlatform[] = [
   {
     name: 'D&D Beyond',
-    emoji: '🧙‍♂️',
+    icon: User4Stroke,
     tagline: 'Official D&D Digital Companion',
     description:
       'Access official digital books, character creator, campaign manager, and official rules integration. Great for tracking campaigns online.',
@@ -35,7 +43,7 @@ const PLATFORMS: GamePlatform[] = [
   },
   {
     name: 'Roll20',
-    emoji: '🎲',
+    icon: GamePadModern1Stroke,
     tagline: 'Browser-Based Virtual Tabletop',
     description:
       'Play D&D online with video/voice chat, shared maps, dynamic lighting, character sheets, and built-in rules reference.',
@@ -45,7 +53,7 @@ const PLATFORMS: GamePlatform[] = [
   },
   {
     name: 'Foundry VTT',
-    emoji: '⚙️',
+    icon: Home2Stroke,
     tagline: 'Modern Self-Hosted Virtual Tabletop',
     description:
       'A feature-rich, downloadable VTT for GMs that runs in the browser for players. Incredible community modules and visual effects.',
@@ -55,7 +63,7 @@ const PLATFORMS: GamePlatform[] = [
   },
   {
     name: 'Owlbear Rodeo',
-    emoji: '🦉',
+    icon: Book1Stroke,
     tagline: 'Simple, Account-Free Map Sharing',
     description:
       'A lightweight web-based VTT focused on simple map sharing and tokens. Zero setup required—create a room and share the link.',
@@ -65,7 +73,7 @@ const PLATFORMS: GamePlatform[] = [
   },
   {
     name: 'Fantasy Grounds',
-    emoji: '🛡️',
+    icon: Shield2Stroke,
     tagline: 'High-Automation Classic Tabletop',
     description:
       'A highly automated tabletop client that handles calculations, maps, modules, and rolls. Great for complex games and rules enforcement.',
@@ -75,7 +83,7 @@ const PLATFORMS: GamePlatform[] = [
   },
   {
     name: 'Tabletop Simulator',
-    emoji: '🌐',
+    icon: GamePadModern1Stroke,
     tagline: '3D Physics VTT Sandbox',
     description:
       'A complete 3D simulator where you can load actual 3D dungeons, flip tables, throw physical 3D dice, and move custom miniatures.',
@@ -101,9 +109,12 @@ export function PlayView() {
       style={[styles.container, { backgroundColor: theme.background }]}
       contentContainerStyle={styles.scrollContent}>
       <View style={styles.header}>
-        <ThemedText type="subtitle" style={styles.title}>
-          🎮 Selection of Online Games
-        </ThemedText>
+        <View style={styles.titleRow}>
+          <Lineicons icon={GamePadModern1Stroke} size={28} color="#dfb15b" />
+          <ThemedText type="subtitle" style={styles.title}>
+            Selection of Online Games
+          </ThemedText>
+        </View>
         <ThemedText style={styles.tagline} themeColor="textSecondary">
           Launch your campaign on the web. Select a virtual tabletop (VTT) or rule companion to start playing Dungeons & Dragons online with your group.
         </ThemedText>
@@ -121,7 +132,9 @@ export function PlayView() {
             ]}
             onPress={() => handleLaunch(platform.url)}>
             <View style={styles.cardHeader}>
-              <ThemedText style={styles.emoji}>{platform.emoji}</ThemedText>
+              <View style={styles.iconContainer}>
+                <Lineicons icon={platform.icon} size={26} color="#dfb15b" />
+              </View>
               <View style={styles.titleBlock}>
                 <ThemedText type="smallBold" style={styles.cardName}>
                   {platform.name}
@@ -167,6 +180,12 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     marginBottom: Spacing.four,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    justifyContent: 'center',
+  },
   title: {
     color: '#dfb15b',
     fontWeight: 'bold',
@@ -211,14 +230,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
   },
-  emoji: {
-    fontSize: 32,
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(223, 177, 91, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(223, 177, 91, 0.1)',
   },
   titleBlock: {
     flex: 1,
   },
   cardName: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 'bold',
   },
   cardTag: {
@@ -229,6 +255,7 @@ const styles = StyleSheet.create({
   desc: {
     lineHeight: 18,
     flexGrow: 1,
+    fontSize: 13,
   },
   footer: {
     flexDirection: 'row',

@@ -14,7 +14,7 @@ import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { Lineicons } from '@lineiconshq/react-native-lineicons';
-import { Book1Stroke, Pencil1Stroke, UserMultiple4Stroke, User4Stroke } from '@lineiconshq/free-icons';
+import { Book1Stroke, Pencil1Stroke, UserMultiple4Stroke, User4Stroke, PlusStroke, GamePadModern1Stroke, HeartStroke, Bolt2Stroke, Shield2Stroke, MagicOutlined } from '@lineiconshq/free-icons';
 
 interface Character {
   id: string;
@@ -35,30 +35,30 @@ interface Character {
 }
 
 const DND_CLASSES = [
-  { name: 'Barbarian', hitDie: 12, saves: ['STR', 'CON'], speedBonus: 10, emoji: '🪓' },
-  { name: 'Bard', hitDie: 8, saves: ['DEX', 'CHA'], speedBonus: 0, emoji: '🪕' },
-  { name: 'Cleric', hitDie: 8, saves: ['WIS', 'CHA'], speedBonus: 0, emoji: '✝️' },
-  { name: 'Druid', hitDie: 8, saves: ['INT', 'WIS'], speedBonus: 0, emoji: '🍃' },
-  { name: 'Fighter', hitDie: 10, saves: ['STR', 'CON'], speedBonus: 0, emoji: '⚔️' },
-  { name: 'Monk', hitDie: 8, saves: ['STR', 'DEX'], speedBonus: 10, emoji: '🥋' },
-  { name: 'Paladin', hitDie: 10, saves: ['WIS', 'CHA'], speedBonus: 0, emoji: '🛡️' },
-  { name: 'Ranger', hitDie: 10, saves: ['STR', 'DEX'], speedBonus: 0, emoji: '🏹' },
-  { name: 'Rogue', hitDie: 8, saves: ['DEX', 'INT'], speedBonus: 0, emoji: '🗡️' },
-  { name: 'Sorcerer', hitDie: 6, saves: ['CON', 'CHA'], speedBonus: 0, emoji: '🔥' },
-  { name: 'Warlock', hitDie: 8, saves: ['WIS', 'CHA'], speedBonus: 0, emoji: '👁️' },
-  { name: 'Wizard', hitDie: 6, saves: ['INT', 'WIS'], speedBonus: 0, emoji: '🔮' },
+  { name: 'Barbarian', hitDie: 12, saves: ['STR', 'CON'], speedBonus: 10, icon: Shield2Stroke },
+  { name: 'Bard', hitDie: 8, saves: ['DEX', 'CHA'], speedBonus: 0, icon: MagicOutlined },
+  { name: 'Cleric', hitDie: 8, saves: ['WIS', 'CHA'], speedBonus: 0, icon: MagicOutlined },
+  { name: 'Druid', hitDie: 8, saves: ['INT', 'WIS'], speedBonus: 0, icon: MagicOutlined },
+  { name: 'Fighter', hitDie: 10, saves: ['STR', 'CON'], speedBonus: 0, icon: Shield2Stroke },
+  { name: 'Monk', hitDie: 8, saves: ['STR', 'DEX'], speedBonus: 10, icon: Shield2Stroke },
+  { name: 'Paladin', hitDie: 10, saves: ['WIS', 'CHA'], speedBonus: 0, icon: Shield2Stroke },
+  { name: 'Ranger', hitDie: 10, saves: ['STR', 'DEX'], speedBonus: 0, icon: Shield2Stroke },
+  { name: 'Rogue', hitDie: 8, saves: ['DEX', 'INT'], speedBonus: 0, icon: Shield2Stroke },
+  { name: 'Sorcerer', hitDie: 6, saves: ['CON', 'CHA'], speedBonus: 0, icon: MagicOutlined },
+  { name: 'Warlock', hitDie: 8, saves: ['WIS', 'CHA'], speedBonus: 0, icon: MagicOutlined },
+  { name: 'Wizard', hitDie: 6, saves: ['INT', 'WIS'], speedBonus: 0, icon: MagicOutlined },
 ];
 
 const DND_RACES = [
-  { name: 'Dwarf', speed: 25, bonus: { constitution: 2 }, emoji: '⛏️' },
-  { name: 'Elf', speed: 30, bonus: { dexterity: 2 }, emoji: '🧝' },
-  { name: 'Halfling', speed: 25, bonus: { dexterity: 2 }, emoji: '🍀' },
-  { name: 'Human', speed: 30, bonus: { strength: 1, dexterity: 1, constitution: 1, intelligence: 1, wisdom: 1, charisma: 1 }, emoji: '👨' },
-  { name: 'Dragonborn', speed: 30, bonus: { strength: 2, charisma: 1 }, emoji: '🐉' },
-  { name: 'Gnome', speed: 25, bonus: { intelligence: 2 }, emoji: '⚙️' },
-  { name: 'Half-Elf', speed: 30, bonus: { charisma: 2, dexterity: 1, constitution: 1 }, emoji: '✨' },
-  { name: 'Half-Orc', speed: 30, bonus: { strength: 2, constitution: 1 }, emoji: '👹' },
-  { name: 'Tiefling', speed: 30, bonus: { charisma: 2, intelligence: 1 }, emoji: '😈' },
+  { name: 'Dwarf', speed: 25, bonus: { constitution: 2 }, icon: User4Stroke },
+  { name: 'Elf', speed: 30, bonus: { dexterity: 2 }, icon: User4Stroke },
+  { name: 'Halfling', speed: 25, bonus: { dexterity: 2 }, icon: User4Stroke },
+  { name: 'Human', speed: 30, bonus: { strength: 1, dexterity: 1, constitution: 1, intelligence: 1, wisdom: 1, charisma: 1 }, icon: User4Stroke },
+  { name: 'Dragonborn', speed: 30, bonus: { strength: 2, charisma: 1 }, icon: User4Stroke },
+  { name: 'Gnome', speed: 25, bonus: { intelligence: 2 }, icon: User4Stroke },
+  { name: 'Half-Elf', speed: 30, bonus: { charisma: 2, dexterity: 1, constitution: 1 }, icon: User4Stroke },
+  { name: 'Half-Orc', speed: 30, bonus: { strength: 2, constitution: 1 }, icon: User4Stroke },
+  { name: 'Tiefling', speed: 30, bonus: { charisma: 2, intelligence: 1 }, icon: User4Stroke },
 ];
 
 const RANDOM_NAMES = [
@@ -274,14 +274,20 @@ export function CharacterView() {
     return (
       <View style={styles.container}>
         <View style={styles.mainHeader}>
-          <ThemedText type="subtitle" style={styles.title}>
-            🧙‍♂️ Character Hub
-          </ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Lineicons icon={User4Stroke} size={24} color="#dfb15b" />
+            <ThemedText type="subtitle" style={styles.title}>
+              Character Hub
+            </ThemedText>
+          </View>
           <View style={{ flexDirection: 'row', gap: Spacing.two }}>
             <Pressable
               style={({ pressed }) => [styles.randomBtn, pressed && { opacity: 0.8 }]}
               onPress={generateRandom}>
-              <ThemedText style={styles.randomBtnText}>🎲 Quick Random</ThemedText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Lineicons icon={GamePadModern1Stroke} size={13} color="#fff" />
+                <ThemedText style={styles.randomBtnText}>Quick Random</ThemedText>
+              </View>
             </Pressable>
             <Pressable
               style={({ pressed }) => [styles.createBtn, pressed && { opacity: 0.8 }]}
@@ -290,7 +296,10 @@ export function CharacterView() {
                 resetForm();
                 setActiveSubTab('builder');
               }}>
-              <ThemedText style={styles.createBtnText}>+ New Character</ThemedText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Lineicons icon={PlusStroke} size={13} color="#fff" />
+                <ThemedText style={styles.createBtnText}>New Character</ThemedText>
+              </View>
             </Pressable>
           </View>
         </View>
@@ -328,9 +337,7 @@ export function CharacterView() {
                   setActiveSubTab('sheet');
                 }}>
                 <View style={styles.vaultAvatar}>
-                  <ThemedText style={{ fontSize: 24 }}>
-                    {DND_CLASSES.find((cls) => cls.name === c.class)?.emoji || '🛡️'}
-                  </ThemedText>
+                  <Lineicons icon={User4Stroke} size={20} color="#dfb15b" />
                 </View>
                 <View style={{ flex: 1, gap: 4 }}>
                   <ThemedText type="subtitle" style={{ fontSize: 16, fontWeight: 'bold' }}>
@@ -340,8 +347,14 @@ export function CharacterView() {
                     Level 1 {c.race} {c.class}
                   </ThemedText>
                   <View style={styles.vaultCardMeta}>
-                    <ThemedText style={styles.metaBadge}>❤️ {c.hp} HP</ThemedText>
-                    <ThemedText style={styles.metaBadge}>👟 {c.speed} ft</ThemedText>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: Spacing.two }}>
+                      <Lineicons icon={HeartStroke} size={11} color="#dfb15b" />
+                      <ThemedText style={styles.metaBadge}>{c.hp} HP</ThemedText>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Lineicons icon={Bolt2Stroke} size={11} color="#dfb15b" />
+                      <ThemedText style={styles.metaBadge}>{c.speed} ft</ThemedText>
+                    </View>
                   </View>
                 </View>
                 <Pressable
@@ -467,7 +480,9 @@ export function CharacterView() {
                             isSelected && { backgroundColor: '#dfb15b', borderColor: '#dfb15b' },
                           ]}
                           onPress={() => setSelectedRace(race)}>
-                          <ThemedText style={styles.cardEmoji}>{race.emoji}</ThemedText>
+                          <View style={{ marginVertical: Spacing.one }}>
+                            <Lineicons icon={race.icon} size={18} color={isSelected ? '#fff' : '#dfb15b'} />
+                          </View>
                           <ThemedText style={[styles.cardBtnText, isSelected && { color: '#fff' }]}>
                             {race.name}
                           </ThemedText>
@@ -494,7 +509,9 @@ export function CharacterView() {
                             isSelected && { backgroundColor: '#dfb15b', borderColor: '#dfb15b' },
                           ]}
                           onPress={() => setSelectedClass(cls)}>
-                          <ThemedText style={styles.cardEmoji}>{cls.emoji}</ThemedText>
+                          <View style={{ marginVertical: Spacing.one }}>
+                            <Lineicons icon={cls.icon} size={18} color={isSelected ? '#fff' : '#dfb15b'} />
+                          </View>
                           <ThemedText style={[styles.cardBtnText, isSelected && { color: '#fff' }]}>
                             {cls.name}
                           </ThemedText>
@@ -563,9 +580,10 @@ export function CharacterView() {
               <ScrollView contentContainerStyle={styles.sheetScroll}>
                 <View style={styles.sheetHeader}>
                   <View style={styles.avatarBox}>
-                    <ThemedText style={styles.avatarEmoji}>
-                      {DND_CLASSES.find((c) => c.name === selectedChar.class)?.emoji || '🛡️'}
-                    </ThemedText>
+                    {(() => {
+                      const cls = DND_CLASSES.find((c) => c.name === selectedChar.class);
+                      return <Lineicons icon={cls?.icon || Shield2Stroke} size={24} color="#dfb15b" />;
+                    })()}
                   </View>
                   <View style={{ flex: 1 }}>
                     <ThemedText type="subtitle" style={styles.sheetName}>
@@ -655,9 +673,10 @@ export function CharacterView() {
                     ]}>
                     <View style={styles.partyItemLeft}>
                       <View style={styles.partyAvatar}>
-                        <ThemedText style={{ fontSize: 18 }}>
-                          {DND_CLASSES.find((c) => c.name === item.class)?.emoji || '🛡️'}
-                        </ThemedText>
+                        {(() => {
+                          const cls = DND_CLASSES.find((c) => c.name === item.class);
+                          return <Lineicons icon={cls?.icon || Shield2Stroke} size={18} color="#dfb15b" />;
+                        })()}
                       </View>
                       <View>
                         <ThemedText type="smallBold">{item.name}</ThemedText>

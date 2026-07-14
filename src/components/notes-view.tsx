@@ -357,13 +357,19 @@ export function NotesView() {
     return (
       <View style={styles.container}>
         <View style={styles.mainHeader}>
-          <ThemedText type="subtitle" style={styles.title}>
-            📝 Campaign Journals
-          </ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Lineicons icon={Pencil1Stroke} size={24} color="#dfb15b" />
+            <ThemedText type="subtitle" style={styles.title}>
+              Campaign Journals
+            </ThemedText>
+          </View>
           <Pressable
             style={({ pressed }) => [styles.createBtn, pressed && { opacity: 0.8 }]}
             onPress={handleCreateCampaign}>
-            <ThemedText style={styles.createBtnText}>+ New Campaign</ThemedText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Lineicons icon={PlusStroke} size={13} color="#fff" />
+              <ThemedText style={styles.createBtnText}>New Campaign</ThemedText>
+            </View>
           </Pressable>
         </View>
 
@@ -389,7 +395,9 @@ export function NotesView() {
                   pressed && { opacity: 0.9 },
               ]}
               onPress={() => setSelectedCampaignId(c.id)}>
-              <ThemedText style={styles.campaignEmoji}>{c.emoji}</ThemedText>
+              <View style={{ marginRight: Spacing.two }}>
+                <Lineicons icon={Book1Stroke} size={24} color="#dfb15b" />
+              </View>
               <View style={{ flex: 1, gap: 4 }}>
                 <ThemedText type="subtitle" style={{ fontSize: 16, fontWeight: 'bold' }}>
                   {c.title}
@@ -398,9 +406,12 @@ export function NotesView() {
                   {c.desc}
                 </ThemedText>
                 <View style={styles.campaignMeta}>
-                  <ThemedText style={styles.metaBadge}>
-                    📝 {c.notes.length} Note{c.notes.length > 1 ? 's' : ''}
-                  </ThemedText>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Lineicons icon={Pencil1Stroke} size={11} color="#dfb15b" />
+                    <ThemedText style={styles.metaBadge}>
+                      {c.notes.length} Note{c.notes.length > 1 ? 's' : ''}
+                    </ThemedText>
+                  </View>
                 </View>
               </View>
             </Pressable>
