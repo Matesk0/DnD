@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FlatList,
   Pressable,
@@ -8,7 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
@@ -73,11 +73,35 @@ export function CharacterView() {
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 700;
 
-  const [activeSubTab, setActiveSubTab] = useState<CharacterSubTab>('builder');
-  const [characters, setCharacters] = useState<Character[]>([]);
+  const [activeSubTab, setActiveSubTab] = useState<CharacterSubTab>('sheet');
   const [selectedCharId, setSelectedCharId] = useState<string | null>(null);
+  const [isBuildingNew, setIsBuildingNew] = useState(false);
 
-  // Form State
+  // Seed default characters so the interface is not empty initially
+  const [characters, setCharacters] = useState<Character[]>([
+    {
+      id: 'char_1',
+      name: 'Thorrall Ironbreaker',
+      class: 'Cleric',
+      race: 'Dwarf',
+      stats: { strength: 14, dexterity: 8, constitution: 16, intelligence: 10, wisdom: 15, charisma: 12 },
+      hp: 11,
+      speed: 25,
+      savingThrows: ['WIS', 'CHA'],
+    },
+    {
+      id: 'char_2',
+      name: 'Elysia Moonwhisper',
+      class: 'Wizard',
+      race: 'Elf',
+      stats: { strength: 8, dexterity: 15, constitution: 12, intelligence: 16, wisdom: 13, charisma: 10 },
+      hp: 7,
+      speed: 30,
+      savingThrows: ['INT', 'WIS'],
+    },
+  ]);
+
+  // Form State for Builder / Editor
   const [name, setName] = useState('');
   const [selectedClass, setSelectedClass] = useState(DND_CLASSES[4]); // Fighter
   const [selectedRace, setSelectedRace] = useState(DND_RACES[3]); // Human
@@ -90,6 +114,21 @@ export function CharacterView() {
     charisma: 10,
   });
 
+  // Prepopulate form when editing an existing character
+  useEffect(() => {
+    if (selectedCharId && activeSubTab === 'builder' && !isBuildingNew) {
+      const char = characters.find((c) => c.id === selectedCharId);
+      if (char) {
+        setName(char.name);
+        const cls = DND_CLASSES.find((c) => c.name === char.class) || DND_CLASSES[4];
+        const rc = DND_RACES.find((r) => r.name === char.race) || DND_RACES[3];
+        setSelectedClass(cls);
+        setSelectedRace(rc);
+        setStats({ ...char.stats });
+      }
+    }
+  }, [selectedCharId, activeSubTab, isBuildingNew]);
+
   const getModifier = (score: number) => {
     return Math.floor((score - 10) / 2);
   };
@@ -98,7 +137,7 @@ export function CharacterView() {
   const rollStat = () => {
     const rolls = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1);
     rolls.sort((a, b) => a - b);
-    return rolls[1] + rolls[2] + rolls[3]; // sum top 3
+    return rolls[1] + rolls[2] + rolls[3];
   };
 
   const rollAllStats = () => {
@@ -112,7 +151,7 @@ export function CharacterView() {
     });
   };
 
-  const createCharacter = () => {
+  const saveCharacter = () => {
     if (!name.trim()) return;
 
     const conMod = getModifier(stats.constitution);
@@ -120,21 +159,44 @@ export function CharacterView() {
     const hp = hitDie + conMod;
     const speed = selectedRace.speed + selectedClass.speedBonus;
 
-    const newChar: Character = {
-      id: Date.now().toString(),
-      name,
-      class: selectedClass.name,
-      race: selectedRace.name,
-      stats: { ...stats },
-      hp: hp > 0 ? hp : 1,
-      speed,
-      savingThrows: [...selectedClass.saves],
-    };
+    if (selectedCharId && !isBuildingNew) {
+      // Edit existing character
+      setCharacters((prev) =>
+        prev.map((c) =>
+          c.id === selectedCharId
+            ? {
+                ...c,
+                name,
+                class: selectedClass.name,
+                race: selectedRace.name,
+                stats: { ...stats },
+                hp: hp > 0 ? hp : 1,
+                speed,
+                savingThrows: [...selectedClass.saves],
+              }
+            : c
+        )
+      );
+      setActiveSubTab('sheet');
+    } else {
+      // Create new character
+      const newChar: Character = {
+        id: Date.now().toString(),
+        name,
+        class: selectedClass.name,
+        race: selectedRace.name,
+        stats: { ...stats },
+        hp: hp > 0 ? hp : 1,
+        speed,
+        savingThrows: [...selectedClass.saves],
+      };
 
-    setCharacters((prev) => [newChar, ...prev]);
-    setSelectedCharId(newChar.id);
-    resetForm();
-    setActiveSubTab('sheet');
+      setCharacters((prev) => [newChar, ...prev]);
+      setSelectedCharId(newChar.id);
+      setIsBuildingNew(false);
+      resetForm();
+      setActiveSubTab('sheet');
+    }
   };
 
   const generateRandom = () => {
@@ -176,6 +238,7 @@ export function CharacterView() {
 
     setCharacters((prev) => [newChar, ...prev]);
     setSelectedCharId(newChar.id);
+    setIsBuildingNew(false);
     setActiveSubTab('sheet');
   };
 
@@ -202,53 +265,157 @@ export function CharacterView() {
 
   const selectedChar = characters.find((c) => c.id === selectedCharId);
 
+  // ────────────────────────────────────────────────────────────────────────────
+  // CHARACTER HUB SELECTOR VIEW (DEFAULT STATE)
+  // ────────────────────────────────────────────────────────────────────────────
+  if (!selectedCharId && !isBuildingNew) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.mainHeader}>
+          <ThemedText type="subtitle" style={styles.title}>
+            🧙‍♂️ Character Hub
+          </ThemedText>
+          <View style={{ flexDirection: 'row', gap: Spacing.two }}>
+            <Pressable
+              style={({ pressed }) => [styles.randomBtn, pressed && { opacity: 0.8 }]}
+              onPress={generateRandom}>
+              <ThemedText style={styles.randomBtnText}>🎲 Quick Random</ThemedText>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.createBtn, pressed && { opacity: 0.8 }]}
+              onPress={() => {
+                setIsBuildingNew(true);
+                resetForm();
+                setActiveSubTab('builder');
+              }}>
+              <ThemedText style={styles.createBtnText}>+ New Character</ThemedText>
+            </Pressable>
+          </View>
+        </View>
+
+        <ThemedText themeColor="textSecondary" style={styles.subtitle}>
+          Select a character sheet from your vault to view details, edit stats, or manage your party:
+        </ThemedText>
+
+        <ScrollView contentContainerStyle={styles.vaultList}>
+          {characters.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <ThemedText style={{ fontStyle: 'italic', textAlign: 'center' }} themeColor="textSecondary">
+                Your character vault is currently empty. Click '+ New Character' above to forge a hero!
+              </ThemedText>
+            </View>
+          ) : (
+            characters.map((c) => (
+              <Pressable
+                key={c.id}
+                style={({ hovered, pressed }) => [
+                  styles.vaultCard,
+                  { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected },
+                  hovered && { borderColor: '#D81921' },
+                  pressed && { opacity: 0.95 },
+                ]}
+                onPress={() => {
+                  setSelectedCharId(c.id);
+                  setActiveSubTab('sheet');
+                }}>
+                <View style={styles.vaultAvatar}>
+                  <ThemedText style={{ fontSize: 24 }}>
+                    {DND_CLASSES.find((cls) => cls.name === c.class)?.emoji || '🛡️'}
+                  </ThemedText>
+                </View>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <ThemedText type="subtitle" style={{ fontSize: 16, fontWeight: 'bold' }}>
+                    {c.name}
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Level 1 {c.race} {c.class}
+                  </ThemedText>
+                  <View style={styles.vaultCardMeta}>
+                    <ThemedText style={styles.metaBadge}>❤️ {c.hp} HP</ThemedText>
+                    <ThemedText style={styles.metaBadge}>👟 {c.speed} ft</ThemedText>
+                  </View>
+                </View>
+                <Pressable
+                  style={({ pressed }) => [styles.vaultDeleteBtn, pressed && { opacity: 0.7 }]}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    deleteCharacter(c.id);
+                  }}>
+                  <ThemedText style={{ color: '#e53e3e', fontSize: 12 }}>Delete</ThemedText>
+                </Pressable>
+              </Pressable>
+            ))
+          )}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // ACTIVE CHARACTER TABS VIEW (DETAILS & BUILDER)
+  // ────────────────────────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
-      {/* Red/Dark Sub-Header Bar */}
+      {/* Red/Dark Sub-Header Bar with Navigation Back-Link */}
       <View style={styles.mainHeader}>
-        <ThemedText type="subtitle" style={styles.title}>
-          🧙‍♂️ Character Hub
-        </ThemedText>
-        <Pressable
-          style={({ pressed }) => [styles.randomBtn, pressed && { opacity: 0.8 }]}
-          onPress={generateRandom}>
-          <ThemedText style={styles.randomBtnText}>🎲 Quick Randomizer</ThemedText>
-        </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
+          <Pressable
+            style={({ pressed }) => [styles.hubBackBtn, pressed && { opacity: 0.8 }]}
+            onPress={() => {
+              setSelectedCharId(null);
+              setIsBuildingNew(false);
+            }}>
+            <ThemedText style={styles.hubBackBtnText}>← Hub</ThemedText>
+          </Pressable>
+          <ThemedText type="subtitle" style={styles.title}>
+            {isBuildingNew ? '🛠️ Character Builder' : `${selectedChar?.name.split(' ')[0]}'s Sheet`}
+          </ThemedText>
+        </View>
+
+        {isBuildingNew && (
+          <Pressable
+            style={({ pressed }) => [styles.randomBtn, pressed && { opacity: 0.8 }]}
+            onPress={generateRandom}>
+            <ThemedText style={styles.randomBtnText}>🎲 Quick Randomizer</ThemedText>
+          </Pressable>
+        )}
       </View>
 
-      {/* Tab Navigation */}
-      <View style={styles.tabContainer}>
-        <Pressable
-          style={[styles.tabBtn, activeSubTab === 'builder' && styles.activeTabBtn]}
-          onPress={() => setActiveSubTab('builder')}>
-          <ThemedText style={[styles.tabBtnText, activeSubTab === 'builder' && styles.activeTabBtnText]}>
-            🛠️ Builder
-          </ThemedText>
-        </Pressable>
-        <Pressable
-          style={[styles.tabBtn, activeSubTab === 'sheet' && styles.activeTabBtn]}
-          onPress={() => setActiveSubTab('sheet')}>
-          <ThemedText style={[styles.tabBtnText, activeSubTab === 'sheet' && styles.activeTabBtnText]}>
-            📜 Character Sheet {selectedChar ? `(${selectedChar.name.split(' ')[0]})` : ''}
-          </ThemedText>
-        </Pressable>
-        <Pressable
-          style={[styles.tabBtn, activeSubTab === 'party' && styles.activeTabBtn]}
-          onPress={() => setActiveSubTab('party')}>
-          <ThemedText style={[styles.tabBtnText, activeSubTab === 'party' && styles.activeTabBtnText]}>
-            👥 Party ({characters.length})
-          </ThemedText>
-        </Pressable>
-      </View>
+      {/* Tab Navigation (Only show if not building a new character) */}
+      {!isBuildingNew && (
+        <View style={styles.tabContainer}>
+          <Pressable
+            style={[styles.tabBtn, activeSubTab === 'sheet' && styles.activeTabBtn]}
+            onPress={() => setActiveSubTab('sheet')}>
+            <ThemedText style={[styles.tabBtnText, activeSubTab === 'sheet' && styles.activeTabBtnText]}>
+              📜 Sheet
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            style={[styles.tabBtn, activeSubTab === 'builder' && styles.activeTabBtn]}
+            onPress={() => setActiveSubTab('builder')}>
+            <ThemedText style={[styles.tabBtnText, activeSubTab === 'builder' && styles.activeTabBtnText]}>
+              🛠️ Editor
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            style={[styles.tabBtn, activeSubTab === 'party' && styles.activeTabBtn]}
+            onPress={() => setActiveSubTab('party')}>
+            <ThemedText style={[styles.tabBtnText, activeSubTab === 'party' && styles.activeTabBtnText]}>
+              👥 Party ({characters.length})
+            </ThemedText>
+          </Pressable>
+        </View>
+      )}
 
       {/* Tab Content Panels */}
       <View style={styles.tabContent}>
-        {activeSubTab === 'builder' && (
-          <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} style={styles.fullSize}>
+        {(activeSubTab === 'builder' || isBuildingNew) && (
+          <Animated.View entering={FadeIn.duration(200)} style={styles.fullSize}>
             <ScrollView style={styles.scrollColumn} contentContainerStyle={{ paddingBottom: Spacing.six }}>
               <ThemedView type="backgroundElement" style={styles.formCard}>
                 <ThemedText type="smallBold" style={styles.formSectionTitle}>
-                  Create New Character
+                  {selectedCharId && !isBuildingNew ? 'Edit Character Attributes' : 'Forge a New Character'}
                 </ThemedText>
 
                 {/* Name Input */}
@@ -362,16 +529,18 @@ export function CharacterView() {
                     pressed && { opacity: 0.8 },
                   ]}
                   disabled={!name.trim()}
-                  onPress={createCharacter}>
-                  <ThemedText style={styles.createBtnText}>💾 Save & View Character</ThemedText>
+                  onPress={saveCharacter}>
+                  <ThemedText style={styles.createBtnText}>
+                    {selectedCharId && !isBuildingNew ? '💾 Update Attributes' : '💾 Forge Character'}
+                  </ThemedText>
                 </Pressable>
               </ThemedView>
             </ScrollView>
           </Animated.View>
         )}
 
-        {activeSubTab === 'sheet' && (
-          <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} style={styles.fullSize}>
+        {activeSubTab === 'sheet' && !isBuildingNew && (
+          <Animated.View entering={FadeIn.duration(200)} style={styles.fullSize}>
             {selectedChar ? (
               <ScrollView contentContainerStyle={styles.sheetScroll}>
                 <View style={styles.sheetHeader}>
@@ -399,142 +568,105 @@ export function CharacterView() {
 
                 <View style={styles.divider} />
 
-                {/* HP, AC, Speed Vitals */}
-                <View style={styles.vitalsRow}>
-                  <View style={styles.vitalCard}>
-                    <ThemedText type="smallBold" themeColor="textSecondary">Hit Points</ThemedText>
-                    <ThemedText type="subtitle" style={{ color: '#34c759', fontWeight: 'bold' }}>
-                      {selectedChar.hp}
-                    </ThemedText>
-                  </View>
-                  <View style={styles.vitalCard}>
-                    <ThemedText type="smallBold" themeColor="textSecondary">Armor Class</ThemedText>
-                    <ThemedText type="subtitle" style={{ color: '#ff9500', fontWeight: 'bold' }}>
-                      {10 + getModifier(selectedChar.stats.dexterity)}
-                    </ThemedText>
-                  </View>
-                  <View style={styles.vitalCard}>
-                    <ThemedText type="smallBold" themeColor="textSecondary">Speed</ThemedText>
-                    <ThemedText type="subtitle" style={{ color: '#007aff', fontWeight: 'bold' }}>
-                      {selectedChar.speed} ft.
-                    </ThemedText>
-                  </View>
+                {/* HP & Speed Cards */}
+                <View style={styles.coreStatsRow}>
+                  <ThemedView type="backgroundElement" style={styles.coreStatCard}>
+                    <ThemedText type="small" themeColor="textSecondary">HIT POINTS</ThemedText>
+                    <ThemedText type="title" style={{ color: '#D81921', fontSize: 28 }}>{selectedChar.hp}</ThemedText>
+                  </ThemedView>
+                  <ThemedView type="backgroundElement" style={styles.coreStatCard}>
+                    <ThemedText type="small" themeColor="textSecondary">SPEED</ThemedText>
+                    <ThemedText type="title" style={{ fontSize: 28 }}>{selectedChar.speed} ft</ThemedText>
+                  </ThemedView>
                 </View>
 
-                <View style={styles.divider} />
-
-                {/* Ability Scores */}
-                <ThemedText type="smallBold" style={styles.sectionTitle}>
-                  Ability Scores
-                </ThemedText>
-                <View style={styles.scoresGrid}>
+                {/* Abilities */}
+                <ThemedText type="smallBold" style={styles.subTitle}>Ability Scores</ThemedText>
+                <View style={styles.abilitiesGrid}>
                   {Object.entries(selectedChar.stats).map(([stat, val]) => {
                     const mod = getModifier(val);
-                    const modText = mod >= 0 ? `+${mod}` : `${mod}`;
                     return (
-                      <View key={stat} style={styles.scoreBox}>
+                      <ThemedView key={stat} type="backgroundElement" style={styles.statCard}>
                         <ThemedText type="code" style={styles.statLabel}>
                           {stat.slice(0, 3).toUpperCase()}
                         </ThemedText>
-                        <ThemedText type="subtitle" style={styles.statScore}>
-                          {val}
-                        </ThemedText>
+                        <ThemedText style={styles.statScore}>{val}</ThemedText>
                         <View style={styles.modBadge}>
-                          <ThemedText style={styles.modText}>{modText}</ThemedText>
+                          <ThemedText style={styles.modText}>{mod >= 0 ? `+${mod}` : mod}</ThemedText>
                         </View>
-                      </View>
+                      </ThemedView>
                     );
                   })}
                 </View>
 
-                <View style={styles.divider} />
-
                 {/* Saving Throws */}
-                <View style={styles.savesContainer}>
-                  <ThemedText type="smallBold" style={styles.sectionTitle}>
-                    Saving Throw Proficiencies
-                  </ThemedText>
-                  <View style={styles.savesRow}>
-                    {selectedChar.savingThrows.map((save) => (
-                      <View key={save} style={styles.saveTag}>
-                        <ThemedText style={styles.saveTagText}>{save}</ThemedText>
-                      </View>
-                    ))}
+                <View style={{ marginTop: Spacing.four }}>
+                  <ThemedText type="smallBold" style={styles.subTitle}>Saving Throws</ThemedText>
+                  <View style={styles.savesContainer}>
+                    <View style={styles.savesRow}>
+                      {selectedChar.savingThrows.map((save) => (
+                        <View key={save} style={styles.saveTag}>
+                          <ThemedText style={styles.saveTagText}>{save} Proficient</ThemedText>
+                        </View>
+                      ))}
+                    </View>
                   </View>
                 </View>
               </ScrollView>
             ) : (
               <View style={styles.centerContent}>
-                <ThemedText style={styles.emptyText} themeColor="textSecondary">
-                  🧙‍♂️ No character selected. Create a character in the **Builder** tab or randomize one to inspect it here.
-                </ThemedText>
+                <ThemedText themeColor="textSecondary">No character loaded.</ThemedText>
               </View>
             )}
           </Animated.View>
         )}
 
-        {activeSubTab === 'party' && (
-          <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} style={styles.fullSize}>
-            <ScrollView contentContainerStyle={{ paddingBottom: Spacing.four }}>
-              {characters.length > 0 ? (
-                <View style={styles.charListContainer}>
-                  <ThemedText type="smallBold" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
-                    Your Party ({characters.length} Member{characters.length > 1 ? 's' : ''})
-                  </ThemedText>
-                  {characters.map((c) => {
-                    const isActive = c.id === selectedCharId;
-                    return (
+        {activeSubTab === 'party' && !isBuildingNew && (
+          <Animated.View entering={FadeIn.duration(200)} style={styles.fullSize}>
+            <ScrollView contentContainerStyle={{ padding: Spacing.three }}>
+              <ThemedText type="smallBold" style={styles.subTitle}>Active Party Vault</ThemedText>
+              <View style={styles.charListContainer}>
+                {characters.map((item) => (
+                  <ThemedView
+                    key={item.id}
+                    type="backgroundElement"
+                    style={[
+                      styles.charListItem,
+                      { borderColor: theme.backgroundSelected },
+                      item.id === selectedCharId && { borderColor: '#D81921' },
+                    ]}>
+                    <View style={styles.partyItemLeft}>
+                      <View style={styles.partyAvatar}>
+                        <ThemedText style={{ fontSize: 18 }}>
+                          {DND_CLASSES.find((c) => c.name === item.class)?.emoji || '🛡️'}
+                        </ThemedText>
+                      </View>
+                      <View>
+                        <ThemedText type="smallBold">{item.name}</ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          Level 1 {item.race} {item.class}
+                        </ThemedText>
+                      </View>
+                    </View>
+                    <View style={styles.partyItemRight}>
                       <Pressable
-                        key={c.id}
-                        style={({ hovered }) => [
-                          styles.charListItem,
-                          {
-                            backgroundColor: isActive ? theme.backgroundSelected : theme.backgroundElement,
-                            borderColor: theme.backgroundSelected,
-                          },
-                          hovered && { backgroundColor: theme.backgroundSelected },
+                        style={({ pressed }) => [
+                          styles.hubBackBtn,
+                          { marginRight: 8, paddingVertical: 4, paddingHorizontal: 8 },
+                          pressed && { opacity: 0.8 },
                         ]}
-                        onPress={() => {
-                          setSelectedCharId(c.id);
-                          setActiveSubTab('sheet');
-                        }}>
-                        <View style={styles.partyItemLeft}>
-                          <View style={styles.partyAvatar}>
-                            <ThemedText style={{ fontSize: 18 }}>
-                              {DND_CLASSES.find((cl) => cl.name === c.class)?.emoji || '🛡️'}
-                            </ThemedText>
-                          </View>
-                          <View>
-                            <ThemedText type="smallBold">{c.name}</ThemedText>
-                            <ThemedText type="small" themeColor="textSecondary">
-                              {c.race} {c.class} • HP: {c.hp} • AC: {10 + getModifier(c.stats.dexterity)}
-                            </ThemedText>
-                          </View>
-                        </View>
-                        <View style={styles.partyItemRight}>
-                          <Pressable
-                            style={({ pressed }) => [styles.partyDeleteBtn, pressed && { opacity: 0.7 }]}
-                            onPress={(e) => {
-                              e.stopPropagation();
-                              deleteCharacter(c.id);
-                            }}>
-                            <ThemedText style={styles.partyDeleteText}>🗑️</ThemedText>
-                          </Pressable>
-                          <ThemedText style={{ fontSize: 20, color: theme.textSecondary, marginLeft: Spacing.one }}>
-                            ›
-                          </ThemedText>
-                        </View>
+                        onPress={() => setSelectedCharId(item.id)}>
+                        <ThemedText style={{ fontSize: 11, color: '#D81921', fontWeight: 'bold' }}>Load</ThemedText>
                       </Pressable>
-                    );
-                  })}
-                </View>
-              ) : (
-                <View style={styles.centerContent}>
-                  <ThemedText style={styles.emptyText} themeColor="textSecondary">
-                    👥 Your party is empty. Go to the **Builder** tab to create adventurers.
-                  </ThemedText>
-                </View>
-              )}
+                      <Pressable
+                        style={({ pressed }) => [styles.partyDeleteBtn, pressed && { opacity: 0.7 }]}
+                        onPress={() => deleteCharacter(item.id)}>
+                        <ThemedText style={styles.partyDeleteText}>🗑️</ThemedText>
+                      </Pressable>
+                    </View>
+                  </ThemedView>
+                ))}
+              </View>
             </ScrollView>
           </Animated.View>
         )}
@@ -546,105 +678,170 @@ export function CharacterView() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: Spacing.three,
   },
   mainHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.three,
-    width: '100%',
-    maxWidth: 800,
-    alignSelf: 'center',
-    gap: Spacing.two,
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    backgroundColor: '#1c1c1c',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2d2d2d',
   },
   title: {
-    color: '#D81921',
     fontWeight: 'bold',
+    color: '#D81921',
+  },
+  subtitle: {
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.one,
+    fontSize: 13,
   },
   randomBtn: {
-    backgroundColor: 'rgba(216, 25, 33, 0.1)',
-    borderWidth: 1,
-    borderColor: '#D81921',
     paddingVertical: Spacing.one,
     paddingHorizontal: Spacing.two,
     borderRadius: Spacing.two,
+    borderWidth: 1,
+    borderColor: 'rgba(216, 25, 33, 0.4)',
   },
   randomBtnText: {
     color: '#D81921',
     fontWeight: 'bold',
     fontSize: 12,
   },
+  createBtn: {
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.two,
+    borderRadius: Spacing.two,
+    backgroundColor: '#D81921',
+  },
+  createBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  hubBackBtn: {
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.two,
+    borderRadius: Spacing.two,
+    backgroundColor: '#2d2d2d',
+    borderWidth: 1,
+    borderColor: '#3e3e3e',
+  },
+  hubBackBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  vaultList: {
+    padding: Spacing.four,
+    gap: Spacing.two,
+  },
+  vaultCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.three,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
+    gap: Spacing.three,
+  },
+  vaultAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  vaultCardMeta: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    marginTop: 2,
+  },
+  metaBadge: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#aaa',
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 2,
+    borderRadius: Spacing.one,
+  },
+  vaultDeleteBtn: {
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.two,
+    borderRadius: Spacing.one,
+    backgroundColor: 'rgba(229, 62, 62, 0.1)',
+  },
+  emptyContainer: {
+    padding: Spacing.six,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   tabContainer: {
     flexDirection: 'row',
-    alignSelf: 'center',
-    width: '100%',
-    maxWidth: 800,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    borderRadius: Spacing.two,
-    padding: 3,
-    marginBottom: Spacing.three,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2d2d2d',
+    backgroundColor: '#151515',
   },
   tabBtn: {
     flex: 1,
     paddingVertical: Spacing.two,
     alignItems: 'center',
-    borderRadius: Spacing.one,
   },
   activeTabBtn: {
-    backgroundColor: '#D81921',
+    borderBottomWidth: 2,
+    borderBottomColor: '#D81921',
   },
   tabBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 'bold',
-    color: '#aaa',
+    color: '#888',
   },
   activeTabBtnText: {
-    color: '#fff',
+    color: '#D81921',
   },
   tabContent: {
     flex: 1,
-    width: '100%',
-    maxWidth: 800,
-    alignSelf: 'center',
   },
   fullSize: {
     flex: 1,
   },
   scrollColumn: {
     flex: 1,
+    padding: Spacing.three,
   },
   formCard: {
     padding: Spacing.four,
-    borderRadius: Spacing.three,
+    borderRadius: Spacing.two,
+    gap: Spacing.four,
     borderWidth: 1,
     borderColor: 'rgba(216, 25, 33, 0.1)',
-    gap: Spacing.four,
-    borderCurve: 'continuous',
   },
   formSectionTitle: {
     fontSize: 16,
     color: '#D81921',
   },
   formGroup: {
-    gap: Spacing.two,
+    gap: Spacing.one,
   },
   label: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#aaa',
+    marginBottom: 2,
   },
   input: {
     height: 40,
     borderWidth: 1,
     borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.two,
-    fontSize: 14,
+    paddingHorizontal: Spacing.three,
+    fontSize: 13,
   },
   pickerGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.two,
+    gap: Spacing.one,
   },
   cardPickerBtn: {
     flexDirection: 'row',
@@ -659,8 +856,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   cardBtnText: {
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 11,
+    fontWeight: '500',
   },
   statsHeader: {
     flexDirection: 'row',
@@ -670,84 +867,53 @@ const styles = StyleSheet.create({
   statsInputs: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
     gap: Spacing.one,
+    marginTop: Spacing.one,
   },
   statField: {
-    flex: 1,
+    width: '30%',
     alignItems: 'center',
-    gap: Spacing.half,
+    gap: 4,
+    marginBottom: Spacing.one,
   },
   statInput: {
     width: '100%',
-    height: 35,
+    height: 36,
     borderWidth: 1,
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
     textAlign: 'center',
-    fontSize: 13,
-  },
-  createBtn: {
-    backgroundColor: '#D81921',
-    height: 45,
-    borderRadius: Spacing.two,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: Spacing.two,
-  },
-  createBtnText: {
-    color: '#fff',
+    fontSize: 14,
     fontWeight: 'bold',
-    fontSize: 14,
-  },
-  centerContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.four,
-    borderWidth: 1,
-    borderColor: 'rgba(216, 25, 33, 0.1)',
-    borderRadius: Spacing.three,
-    borderStyle: 'dashed',
-    minHeight: 200,
-  },
-  emptyText: {
-    textAlign: 'center',
-    fontSize: 14,
-    fontStyle: 'italic',
-    lineHeight: 20,
   },
   sheetScroll: {
     padding: Spacing.four,
-    borderRadius: Spacing.three,
-    borderWidth: 1,
-    borderColor: 'rgba(216, 25, 33, 0.15)',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    paddingBottom: Spacing.six,
   },
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
   avatarBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(216, 25, 33, 0.15)',
+    width: 60,
+    height: 60,
+    borderRadius: Spacing.two,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#D81921',
   },
   avatarEmoji: {
-    fontSize: 22,
+    fontSize: 32,
   },
   sheetName: {
     fontSize: 20,
     fontWeight: 'bold',
   },
   deleteButton: {
-    paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.one,
-    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.two,
+    borderRadius: Spacing.one,
     backgroundColor: 'rgba(229, 62, 62, 0.1)',
   },
   deleteButtonText: {
@@ -757,44 +923,41 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(216, 25, 33, 0.1)',
+    backgroundColor: '#2d2d2d',
     marginVertical: Spacing.three,
   },
-  vitalsRow: {
+  coreStatsRow: {
     flexDirection: 'row',
     gap: Spacing.two,
+    marginBottom: Spacing.three,
   },
-  vitalCard: {
+  coreStatCard: {
     flex: 1,
-    padding: Spacing.two,
+    padding: Spacing.three,
     borderRadius: Spacing.two,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
-    gap: Spacing.one,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.03)',
   },
-  sectionTitle: {
-    fontSize: 15,
+  subTitle: {
+    fontSize: 14,
     color: '#D81921',
     marginBottom: Spacing.two,
   },
-  scoresGrid: {
+  abilitiesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
-    justifyContent: 'space-between',
   },
-  scoreBox: {
+  statCard: {
     width: '30%',
-    minWidth: 80,
-    padding: Spacing.two,
+    paddingVertical: Spacing.two,
     borderRadius: Spacing.two,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
-    gap: Spacing.half,
+    gap: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.03)',
   },
   statLabel: {
     fontSize: 11,
@@ -866,5 +1029,11 @@ const styles = StyleSheet.create({
   },
   partyDeleteText: {
     fontSize: 16,
+  },
+  centerContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.four,
   },
 });

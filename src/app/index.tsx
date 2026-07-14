@@ -257,13 +257,25 @@ export default function HomeScreen() {
             </ThemedText>
           </Pressable>
 
-          {isLargeScreen ? (
-            renderNavLinks()
-          ) : (
-            <ThemedText type="small" themeColor="textSecondary" style={{ fontStyle: 'italic' }}>
-              Companion Hub
-            </ThemedText>
-          )}
+          <View style={styles.navRightGroup}>
+            {isLargeScreen ? (
+              renderNavLinks()
+            ) : (
+              <ThemedText type="small" themeColor="textSecondary" style={{ fontStyle: 'italic' }}>
+                Companion Hub
+              </ThemedText>
+            )}
+
+            {/* User Profile Avatar */}
+            <Pressable style={styles.userProfileBtn}>
+              <View style={styles.userAvatar}>
+                <ThemedText style={styles.userAvatarText}>K</ThemedText>
+              </View>
+              {isLargeScreen && (
+                <ThemedText style={styles.userProfileName}>Kaelen (Fighter)</ThemedText>
+              )}
+            </Pressable>
+          </View>
         </View>
       </View>
 
@@ -304,6 +316,40 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 1000,
     alignSelf: 'center',
+  },
+  navRightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.four,
+  },
+  userProfileBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    backgroundColor: '#252525',
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+    borderRadius: Spacing.four,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  userAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#D81921',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  userAvatarText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  userProfileName: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
   },
   navBrand: {
     flexDirection: 'row',

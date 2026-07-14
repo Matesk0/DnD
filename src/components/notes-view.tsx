@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -135,6 +135,19 @@ export function NotesView() {
   const [campaigns, setCampaigns] = useState<CampaignGraph[]>(INITIAL_CAMPAIGNS);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
 
+  // Time state for floating animation like Obsidian
+  const [time, setTime] = useState(0);
+
+  useEffect(() => {
+    let animId: number;
+    const tick = () => {
+      setTime((t) => t + 0.015);
+      animId = requestAnimationFrame(tick);
+    };
+    animId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
   // Active Campaign Data
   const activeCampaign = useMemo(() => {
     return campaigns.find((c) => c.id === selectedCampaignId) || null;
@@ -252,7 +265,7 @@ export function NotesView() {
     );
   };
 
-  // Calculate coordinates for nodes (Circle Layout)
+  // Calculate coordinates for nodes (Circle Layout with floating animation)
   const nodePositions = useMemo(() => {
     if (!activeCampaign) return {};
     const notesCount = activeCampaign.notes.length;
@@ -262,14 +275,22 @@ export function NotesView() {
 
     activeCampaign.notes.forEach((note, index) => {
       const angle = (index * 2 * Math.PI) / (notesCount || 1);
+      const baseX = center.x + Math.cos(angle) * radius;
+      const baseY = center.y + Math.sin(angle) * radius;
+
+      // Gentle floating drift like in Obsidian
+      const phase = index * 1.7; // unique phase offset per node
+      const driftX = Math.sin(time + phase) * 15;
+      const driftY = Math.cos(time * 0.7 + phase) * 15;
+
       positions[note.id] = {
-        x: center.x + Math.cos(angle) * radius,
-        y: center.y + Math.sin(angle) * radius,
+        x: baseX + driftX,
+        y: baseY + driftY,
       };
     });
 
     return positions;
-  }, [activeCampaign, width, height]);
+  }, [activeCampaign, width, height, time]);
 
   // Compute connections/lines between nodes
   const graphConnections = useMemo(() => {
@@ -457,7 +478,15 @@ export function NotesView() {
                     borderColor: isNoteActive ? '#D81921' : theme.backgroundSelected,
                     backgroundColor: isNoteActive ? '#D81921' : theme.backgroundElement,
                   },
-                  hovered && { borderColor: '#D81921' },
+                   hovered && {
+                     borderColor: '#D81921',
+                     transform: [{ scale: 1.12 }],
+                     shadowColor: '#D81921',
+                     shadowOffset: { width: 0, height: 0 },
+                     shadowOpacity: 0.6,
+                     shadowRadius: 8,
+                     elevation: 5,
+                   },
                   pressed && { opacity: 0.8 },
                 ]}
                 onPress={() => handleSelectNote(note.id)}>

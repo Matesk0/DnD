@@ -37,21 +37,20 @@ interface RulebookItem {
   title: string;
   emoji: string;
   desc: string;
-  source: 'api' | 'static';
 }
 
 const RULEBOOK_SECTIONS: RulebookItem[] = [
-  { id: 'spells', title: 'Spells', emoji: '🪄', desc: 'Browse all official spell descriptions, levels, and magic schools.', source: 'api' },
-  { id: 'races', title: 'Races', emoji: '🧝', desc: 'View racial adjustments, size, speeds, and ancestral traits.', source: 'api' },
-  { id: 'classes', title: 'Classes', emoji: '🛡️', desc: 'Inspect class hit dice, saving throws, and subclasses.', source: 'api' },
-  { id: 'backgrounds', title: 'Backgrounds', emoji: '📜', desc: 'Acquire proficiencies and feature tables from character origins.', source: 'api' },
-  { id: 'items', title: 'Items & Magic Loot', emoji: '⚔️', desc: 'Inspect general weapons, armor, tools, and enchanted magic items.', source: 'api' },
-  { id: 'feats', title: 'Feats', emoji: '⚡', desc: 'Search custom training advantages and requirements.', source: 'api' },
-  { id: 'chronicles', title: 'Heroic Chronicles', emoji: '📖', desc: 'Flesh out family histories, ally relations, and fated prophecies.', source: 'static' },
-  { id: 'racial_feats', title: 'Racial Feats', emoji: '🧬', desc: 'Ancestry-specific feats (e.g. Elven Accuracy, Bountiful Luck).', source: 'static' },
-  { id: 'misc', title: 'Miscellaneous Rules', emoji: '⚙️', desc: 'Review active conditions, combat actions, and stats variables.', source: 'static' },
-  { id: 'homebrew', title: 'Homebrew Workshop', emoji: '🧪', desc: 'Create and log your own custom homebrew creations.', source: 'static' },
-  { id: 'ua', title: 'Unearthed Arcana', emoji: '🌌', desc: 'Review official playtest subclasses and test features.', source: 'static' },
+  { id: 'spells', title: 'Spells', emoji: '🪄', desc: 'Browse all official spell descriptions, levels, and magic schools.' },
+  { id: 'races', title: 'Races', emoji: '🧝', desc: 'View racial adjustments, size, speeds, and ancestral traits.' },
+  { id: 'classes', title: 'Classes', emoji: '🛡️', desc: 'Inspect class hit dice, saving throws, and subclasses.' },
+  { id: 'backgrounds', title: 'Backgrounds', emoji: '📜', desc: 'Acquire proficiencies and feature tables from character origins.' },
+  { id: 'items', title: 'Items & Magic Loot', emoji: '⚔️', desc: 'Inspect general weapons, armor, tools, and enchanted magic items.' },
+  { id: 'feats', title: 'Feats', emoji: '⚡', desc: 'Search custom training advantages and requirements.' },
+  { id: 'chronicles', title: 'Heroic Chronicles', emoji: '📖', desc: 'Flesh out family histories, ally relations, and fated prophecies.' },
+  { id: 'racial_feats', title: 'Racial Feats', emoji: '🧬', desc: 'Ancestry-specific feats (e.g. Elven Accuracy, Bountiful Luck).' },
+  { id: 'misc', title: 'Miscellaneous Rules', emoji: '⚙️', desc: 'Review active conditions, combat actions, and stats variables.' },
+  { id: 'homebrew', title: 'Homebrew Workshop', emoji: '🧪', desc: 'Create and log your own custom homebrew creations.' },
+  { id: 'ua', title: 'Unearthed Arcana', emoji: '🌌', desc: 'Review official playtest subclasses and test features.' },
 ];
 
 export function RulebookView() {
@@ -61,7 +60,7 @@ export function RulebookView() {
 
   const [activeSection, setActiveSection] = useState<RulebookSection>('menu');
 
-  // Generic List State for Backgrounds, Feats, Items (Equipment/Magic Items)
+  // Generic List State for Backgrounds, Feats, Items, Chronicles, Racial Feats, Misc, UA
   const [listData, setListData] = useState<DndListItem[]>([]);
   const [loadingList, setLoadingList] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,9 +71,53 @@ export function RulebookView() {
   const [detailsData, setDetailsData] = useState<any | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
+  // Homebrew list/form state
+  const [homebrewTitle, setHomebrewTitle] = useState('');
+  const [homebrewType, setHomebrewType] = useState('Spell');
+  const [homebrewBody, setHomebrewBody] = useState('');
+  const [homebrewList, setHomebrewList] = useState<any[]>([]);
+  const [loadingHomebrew, setLoadingHomebrew] = useState(false);
+
+  // Load Homebrews from Supabase via API
+  const loadHomebrews = async () => {
+    try {
+      setLoadingHomebrew(true);
+      const data = await dndApi.fetchCollection('homebrew');
+      setHomebrewList(data);
+    } catch (err) {
+      console.warn('Failed to load homebrews from API:', err);
+    } finally {
+      setLoadingHomebrew(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSection === 'homebrew') {
+      loadHomebrews();
+    }
+  }, [activeSection]);
+
+  const saveHomebrew = async () => {
+    if (!homebrewTitle.trim() || !homebrewBody.trim()) return;
+    const newItem = {
+      index: homebrewTitle.toLowerCase().replace(/\s+/g, '-'),
+      name: homebrewTitle,
+      type: homebrewType,
+      desc: [homebrewBody],
+    };
+    try {
+      await dndApi.saveHomebrew(newItem);
+      setHomebrewList((prev) => [newItem, ...prev]);
+      setHomebrewTitle('');
+      setHomebrewBody('');
+    } catch (err) {
+      console.error('Failed to save homebrew:', err);
+    }
+  };
+
   // Load generic lists depending on section
   useEffect(() => {
-    if (activeSection === 'menu' || ['spells', 'races', 'classes', 'chronicles', 'racial_feats', 'misc', 'homebrew', 'ua'].includes(activeSection)) {
+    if (activeSection === 'menu' || ['spells', 'races', 'classes', 'homebrew'].includes(activeSection)) {
       setListData([]);
       setSelectedItemIndex(null);
       return;
@@ -98,10 +141,13 @@ export function RulebookView() {
           } else {
             data = await dndApi.getMagicItems();
           }
+        } else {
+          // Dynamic collections for other API-driven sections
+          data = await dndApi.fetchCollection(activeSection);
         }
         setListData(data);
       } catch (err) {
-        console.error('Failed to load list in rulebook:', err);
+        console.error(`Failed to load list for '${activeSection}' from API:`, err);
       } finally {
         setLoadingList(false);
       }
@@ -133,10 +179,13 @@ export function RulebookView() {
           } else {
             data = await dndApi.getMagicItemDetails(index!);
           }
+        } else {
+          // Dynamic details for other sections
+          data = await dndApi.fetchDetails(activeSection, index!);
         }
         setDetailsData(data);
       } catch (err) {
-        console.error('Failed to load details in rulebook:', err);
+        console.error(`Failed to load details for '${activeSection}/${index}' from API:`, err);
       } finally {
         setLoadingDetails(false);
       }
@@ -150,28 +199,6 @@ export function RulebookView() {
       item.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [listData, searchQuery]);
-
-  // Homebrew state
-  const [homebrewTitle, setHomebrewTitle] = useState('');
-  const [homebrewType, setHomebrewType] = useState('Spell');
-  const [homebrewBody, setHomebrewBody] = useState('');
-  const [homebrewList, setHomebrewList] = useState<any[]>([
-    {
-      title: 'Orb of Eldritch Doom',
-      type: 'Magic Item',
-      body: 'Requires attunement by a Warlock. This dark obsidian orb allows you to cast Eldritch Blast with an extra 1d6 force damage.',
-    },
-  ]);
-
-  const saveHomebrew = () => {
-    if (!homebrewTitle.trim() || !homebrewBody.trim()) return;
-    setHomebrewList((prev) => [
-      { title: homebrewTitle, type: homebrewType, body: homebrewBody },
-      ...prev,
-    ]);
-    setHomebrewTitle('');
-    setHomebrewBody('');
-  };
 
   // Render generic list item details
   const renderItemDetails = () => {
@@ -201,6 +228,13 @@ export function RulebookView() {
         {activeSection === 'items' && itemTypeTab === 'magic' && (
           <ThemedText type="code" style={styles.detailsSub}>
             Rarity: {detailsData.rarity?.name || 'Uncommon'}
+          </ThemedText>
+        )}
+
+        {/* Display secondary details for custom dynamic collections */}
+        {detailsData.type && (
+          <ThemedText type="code" style={styles.detailsSub}>
+            Category: {detailsData.type}
           </ThemedText>
         )}
 
@@ -354,23 +388,6 @@ export function RulebookView() {
     );
   };
 
-  // Render static guides
-  const renderStaticGuide = (title: string, content: React.ReactNode) => {
-    return (
-      <View style={styles.staticLayout}>
-        <View style={styles.listHeader}>
-          <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => setActiveSection('menu')}>
-            <ThemedText style={styles.backBtnText}>← Library Menu</ThemedText>
-          </Pressable>
-          <ThemedText type="subtitle" style={styles.listTitle}>
-            {title}
-          </ThemedText>
-        </View>
-        <ScrollView contentContainerStyle={styles.staticContentScroll}>{content}</ScrollView>
-      </View>
-    );
-  };
-
   // Render menu selection
   if (activeSection === 'menu') {
     return (
@@ -404,9 +421,6 @@ export function RulebookView() {
                   <ThemedText type="smallBold" style={styles.cardTitle}>
                     {sec.title}
                   </ThemedText>
-                  <View style={[styles.sourceBadge, { backgroundColor: sec.source === 'api' ? '#D81921' : '#ff9500' }]}>
-                    <ThemedText style={styles.sourceText}>{sec.source.toUpperCase()}</ThemedText>
-                  </View>
                 </View>
               </View>
               <ThemedText type="small" themeColor="textSecondary" style={styles.desc}>
@@ -432,189 +446,97 @@ export function RulebookView() {
     return <ClassesView onBack={() => setActiveSection('menu')} />;
   }
 
-  if (['backgrounds', 'feats', 'items'].includes(activeSection)) {
-    return renderListLayout();
-  }
-
-  // Static Chronicles
-  if (activeSection === 'chronicles') {
-    return renderStaticGuide(
-      '📖 Heroic Chronicles',
-      <View style={styles.staticContentBlock}>
-        <ThemedText type="smallBold" style={{ color: '#D81921', fontSize: 16 }}>Fleshing out Backstories</ThemedText>
-        <ThemedText style={styles.paragraph}>
-          The Heroic Chronicle is a system designed to tie characters directly to the lore and history of their home realms. It generates relationships, family status, major childhood events, and fateful prophecies.
-        </ThemedText>
-        
-        <ThemedText type="smallBold" style={styles.staticSubHeading}>Rollable Chronicle Tables</ThemedText>
-        <View style={styles.staticTable}>
-          <View style={styles.tableRowHeader}>
-            <ThemedText style={[styles.tableCell, { fontWeight: 'bold' }]}>d10</ThemedText>
-            <ThemedText style={[styles.tableCell, { fontWeight: 'bold', flex: 3 }]}>Fateful Prophecy / Event</ThemedText>
-          </View>
-          <View style={styles.tableRow}>
-            <ThemedText style={styles.tableCell}>1</ThemedText>
-            <ThemedText style={[styles.tableCell, { flex: 3 }]}>Born under a crimson comet. You possess an innate magical sigil.</ThemedText>
-          </View>
-          <View style={styles.tableRow}>
-            <ThemedText style={styles.tableCell}>5</ThemedText>
-            <ThemedText style={[styles.tableCell, { flex: 3 }]}>Accidentally opened a rift to the Shadowfell in childhood. You have a shadow companion.</ThemedText>
-          </View>
-          <View style={styles.tableRow}>
-            <ThemedText style={styles.tableCell}>10</ThemedText>
-            <ThemedText style={[styles.tableCell, { flex: 3 }]}>An ancient silver dragon blessed you as a baby. You bear dragon markings.</ThemedText>
-          </View>
-        </View>
-      </View>
-    );
-  }
-
-  // Static Racial Feats
-  if (activeSection === 'racial_feats') {
-    return renderStaticGuide(
-      '🧬 Racial Feats Reference',
-      <View style={styles.staticContentBlock}>
-        <ThemedText type="smallBold" style={{ color: '#D81921', fontSize: 16 }}>Xanathar\'s Feats for Ancestries</ThemedText>
-        <View style={styles.featCard}>
-          <ThemedText type="smallBold" style={styles.featTitle}>Elven Accuracy</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">Prerequisite: Elf or Half-Elf</ThemedText>
-          <ThemedText style={styles.paragraph}>
-            Increase your DEX, INT, WIS, or CHA by 1. Whenever you have advantage on an attack roll using one of these scores, you can reroll one of the dice once. (Often called "Triple Advantage").
-          </ThemedText>
-        </View>
-
-        <View style={styles.featCard}>
-          <ThemedText type="smallBold" style={styles.featTitle}>Bountiful Luck</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">Prerequisite: Halfling</ThemedText>
-          <ThemedText style={styles.paragraph}>
-            When an ally you can see within 30 feet rolls a 1 on the d20 for an attack, check, or saving throw, you can use your reaction to let them reroll the die.
-          </ThemedText>
-        </View>
-      </View>
-    );
-  }
-
-  // Static Misc Rules
-  if (activeSection === 'misc') {
-    return renderStaticGuide(
-      '⚙️ Miscellaneous Rules',
-      <View style={styles.staticContentBlock}>
-        <ThemedText type="smallBold" style={{ color: '#D81921', fontSize: 16 }}>Standard Combat Actions</ThemedText>
-        <ThemedText style={styles.paragraph}>
-          On your turn, you can take one movement, one action, and potentially one bonus action/reaction. Action choices include: Attack, Cast a Spell, Dash, Disengage, Dodge, Help, Hide, Ready, Search, or Use an Object.
-        </ThemedText>
-
-        <ThemedText type="smallBold" style={{ color: '#D81921', fontSize: 16, marginTop: Spacing.three }}>Active Conditions</ThemedText>
-        <View style={styles.conditionCard}>
-          <ThemedText type="smallBold" style={{ color: '#ff9500' }}>Blinded</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            • A blinded creature automatically fails any ability check that requires sight. {'\n'}
-            • Attack rolls against the creature have advantage, and the creature\'s attack rolls have disadvantage.
-          </ThemedText>
-        </View>
-      </View>
-    );
-  }
-
-  // Static Homebrew Creator
+  // Static Homebrew Creator (Communicating with Supabase via API)
   if (activeSection === 'homebrew') {
-    return renderStaticGuide(
-      '🧪 Homebrew Workshop',
-      <View style={styles.staticContentBlock}>
-        <ThemedView type="backgroundElement" style={styles.homebrewForm}>
-          <ThemedText type="smallBold" style={{ color: '#D81921' }}>Forge Homebrew Content</ThemedText>
-          
-          <View style={styles.formGroup}>
-            <ThemedText type="small" themeColor="textSecondary">Creation Title</ThemedText>
-            <TextInput
-              style={[styles.searchInput, { color: theme.text, backgroundColor: theme.background, borderColor: theme.backgroundSelected }]}
-              placeholder="e.g. Ring of Spell Reflection"
-              placeholderTextColor={theme.textSecondary}
-              value={homebrewTitle}
-              onChangeText={setHomebrewTitle}
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <ThemedText type="small" themeColor="textSecondary">Type</ThemedText>
-            <View style={styles.pickerRow}>
-              {['Spell', 'Race', 'Class', 'Magic Item', 'Feat'].map((t) => (
-                <Pressable
-                  key={t}
-                  style={[styles.pickerBtn, { borderColor: theme.backgroundSelected }, homebrewType === t && { backgroundColor: '#D81921' }]}
-                  onPress={() => setHomebrewType(t)}>
-                  <ThemedText style={[styles.pickerBtnText, homebrewType === t && { color: '#fff' }]}>{t}</ThemedText>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.formGroup}>
-            <ThemedText type="small" themeColor="textSecondary">Rules Text & Attributes</ThemedText>
-            <TextInput
-              style={[styles.textarea, { color: theme.text, backgroundColor: theme.background, borderColor: theme.backgroundSelected }]}
-              placeholder="Spell slot level, damage, ranges, or properties..."
-              placeholderTextColor={theme.textSecondary}
-              multiline
-              numberOfLines={4}
-              value={homebrewBody}
-              onChangeText={setHomebrewBody}
-            />
-          </View>
-
-          <Pressable style={({ pressed }) => [styles.saveHomebrewBtn, pressed && { opacity: 0.8 }]} onPress={saveHomebrew}>
-            <ThemedText style={{ color: '#fff', fontWeight: 'bold' }}>Forge Creation</ThemedText>
+    return (
+      <View style={styles.genericListLayout}>
+        <View style={styles.listHeader}>
+          <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => setActiveSection('menu')}>
+            <ThemedText style={styles.backBtnText}>← Library Menu</ThemedText>
           </Pressable>
-        </ThemedView>
-
-        <View style={styles.homebrewList}>
-          <ThemedText type="smallBold" themeColor="textSecondary">Forged Homebrew Library</ThemedText>
-          {homebrewList.map((item, idx) => (
-            <View key={idx} style={styles.homebrewCard}>
-              <View style={styles.homebrewCardHeader}>
-                <ThemedText type="smallBold">{item.title}</ThemedText>
-                <View style={styles.hbBadge}>
-                  <ThemedText style={styles.hbBadgeText}>{item.type}</ThemedText>
-                </View>
-              </View>
-              <ThemedText type="small" style={styles.paragraph} themeColor="text">
-                {item.body}
-              </ThemedText>
+          <ThemedText type="subtitle" style={styles.listTitle}>
+            🧪 Homebrew Workshop
+          </ThemedText>
+        </View>
+        
+        <ScrollView contentContainerStyle={styles.detailsScroll} style={{ padding: Spacing.four }}>
+          <ThemedView type="backgroundElement" style={styles.homebrewForm}>
+            <ThemedText type="smallBold" style={{ color: '#D81921' }}>Forge Homebrew Content</ThemedText>
+            
+            <View style={styles.formGroup}>
+              <ThemedText type="small" themeColor="textSecondary">Creation Title</ThemedText>
+              <TextInput
+                style={[styles.searchInput, { color: theme.text, backgroundColor: theme.background, borderColor: theme.backgroundSelected, marginBottom: 0 }]}
+                placeholder="e.g. Ring of Spell Reflection"
+                placeholderTextColor={theme.textSecondary}
+                value={homebrewTitle}
+                onChangeText={setHomebrewTitle}
+              />
             </View>
-          ))}
-        </View>
+
+            <View style={styles.formGroup}>
+              <ThemedText type="small" themeColor="textSecondary">Type</ThemedText>
+              <View style={styles.pickerRow}>
+                {['Spell', 'Race', 'Class', 'Magic Item', 'Feat'].map((t) => (
+                  <Pressable
+                    key={t}
+                    style={[styles.pickerBtn, { borderColor: theme.backgroundSelected }, homebrewType === t && { backgroundColor: '#D81921' }]}
+                    onPress={() => setHomebrewType(t)}>
+                    <ThemedText style={[styles.pickerBtnText, homebrewType === t && { color: '#fff' }]}>{t}</ThemedText>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.formGroup}>
+              <ThemedText type="small" themeColor="textSecondary">Rules Text & Attributes</ThemedText>
+              <TextInput
+                style={[styles.textarea, { color: theme.text, backgroundColor: theme.background, borderColor: theme.backgroundSelected }]}
+                placeholder="Spell slot level, damage, ranges, or properties..."
+                placeholderTextColor={theme.textSecondary}
+                multiline
+                numberOfLines={4}
+                value={homebrewBody}
+                onChangeText={setHomebrewBody}
+              />
+            </View>
+
+            <Pressable style={({ pressed }) => [styles.saveHomebrewBtn, pressed && { opacity: 0.8 }]} onPress={saveHomebrew}>
+              <ThemedText style={{ color: '#fff', fontWeight: 'bold' }}>Forge Creation</ThemedText>
+            </Pressable>
+          </ThemedView>
+
+          <View style={styles.homebrewList}>
+            <ThemedText type="smallBold" themeColor="textSecondary">Forged Homebrew Vault (Supabase)</ThemedText>
+            {loadingHomebrew ? (
+              <LoadingSpinner />
+            ) : homebrewList.length === 0 ? (
+              <ThemedText type="small" style={{ fontStyle: 'italic', marginTop: 8 }} themeColor="textSecondary">
+                No homebrews found in your vault. Forge one above!
+              </ThemedText>
+            ) : (
+              homebrewList.map((item, idx) => (
+                <ThemedView key={idx} type="backgroundElement" style={styles.homebrewCard}>
+                  <View style={styles.homebrewCardHeader}>
+                    <ThemedText type="smallBold">{item.name}</ThemedText>
+                    <View style={styles.hbBadge}>
+                      <ThemedText style={styles.hbBadgeText}>{item.type}</ThemedText>
+                    </View>
+                  </View>
+                  <ThemedText type="small" style={styles.paragraph} themeColor="text">
+                    {Array.isArray(item.desc) ? item.desc.join('\n') : item.desc}
+                  </ThemedText>
+                </ThemedView>
+              ))
+            )}
+          </View>
+        </ScrollView>
       </View>
     );
   }
 
-  // Static Unearthed Arcana
-  if (activeSection === 'ua') {
-    return renderStaticGuide(
-      '🌌 Unearthed Arcana Playtest',
-      <View style={styles.staticContentBlock}>
-        <ThemedText type="smallBold" style={{ color: '#D81921', fontSize: 16 }}>Unearthed Arcana Archive</ThemedText>
-        <ThemedText style={styles.paragraph}>
-          Unearthed Arcana (UA) consists of playtest articles released by Wizards of the Coast for community feedback. They are not officially legal for Adventurers League unless stated.
-        </ThemedText>
-
-        <View style={styles.uaCard}>
-          <ThemedText type="smallBold" style={styles.uaTitle}>Subclass: Mystic Conflux (Sorcerer)</ThemedText>
-          <ThemedText style={styles.paragraph}>
-            Sorcerers who draw magic from plane alignment nexuses. They gain the ability to shift their spell damage types to force or radiant and can briefly teleport when spending Sorcery Points.
-          </ThemedText>
-        </View>
-
-        <View style={styles.uaCard}>
-          <ThemedText type="smallBold" style={styles.uaTitle}>Subclass: College of Chant (Bard)</ThemedText>
-          <ThemedText style={styles.paragraph}>
-            Bards specializing in sustained battle chants. Their Bardic Inspiration dice can be added to an ally\'s saving throws recursively for 1 minute.
-          </ThemedText>
-        </View>
-      </View>
-    );
-  }
-
-  return null;
+  // All other sections (Chronicles, Racial Feats, Misc Rules, UA) use generic API layout
+  return renderListLayout();
 }
 
 const styles = StyleSheet.create({
@@ -675,18 +597,6 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 15,
-    fontWeight: 'bold',
-  },
-  sourceBadge: {
-    paddingHorizontal: Spacing.one,
-    paddingVertical: 1,
-    borderRadius: Spacing.one,
-    alignSelf: 'flex-start',
-    marginTop: 2,
-  },
-  sourceText: {
-    color: '#fff',
-    fontSize: 8,
     fontWeight: 'bold',
   },
   desc: {
@@ -846,46 +756,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
-  staticLayout: {
-    flex: 1,
-    width: '100%',
-  },
-  staticContentScroll: {
-    padding: Spacing.four,
-    width: '100%',
-    maxWidth: 800,
-    alignSelf: 'center',
-  },
-  staticContentBlock: {
-    gap: Spacing.three,
-  },
-  staticSubHeading: {
-    fontSize: 14,
-    color: '#D81921',
-    fontWeight: 'bold',
-    marginTop: Spacing.two,
-  },
-  staticTable: {
-    borderWidth: 1,
-    borderColor: 'rgba(216, 25, 33, 0.2)',
-    borderRadius: Spacing.two,
-    overflow: 'hidden',
-  },
-  tableRowHeader: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(216, 25, 33, 0.1)',
-    padding: Spacing.two,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    padding: Spacing.two,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(216, 25, 33, 0.1)',
-  },
-  tableCell: {
-    flex: 1,
-    fontSize: 12,
-  },
   featCard: {
     padding: Spacing.three,
     borderRadius: Spacing.two,
@@ -898,16 +768,6 @@ const styles = StyleSheet.create({
   featTitle: {
     color: '#D81921',
     fontSize: 15,
-  },
-  conditionCard: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    borderLeftWidth: 3,
-    borderLeftColor: '#ff9500',
-    gap: Spacing.one,
   },
   homebrewForm: {
     padding: Spacing.three,
@@ -976,20 +836,5 @@ const styles = StyleSheet.create({
     color: '#D81921',
     fontSize: 9,
     fontWeight: 'bold',
-  },
-  uaCard: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-    borderColor: 'rgba(216, 25, 33, 0.15)',
-    borderLeftWidth: 3,
-    borderLeftColor: '#ff9500',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    marginVertical: Spacing.one,
-  },
-  uaTitle: {
-    color: '#ff9500',
-    fontSize: 14,
-    marginBottom: Spacing.one,
   },
 });

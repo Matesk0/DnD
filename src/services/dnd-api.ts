@@ -177,4 +177,16 @@ export const dndApi = {
   getMagicItemDetails: async (index: string): Promise<any> => {
     return dndApi.fetchDetails('magic-items', index);
   },
+
+  saveHomebrew: async (item: any): Promise<any> => {
+    const response = await fetch(`${BASE_URL}/api/homebrew`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to save homebrew: status ${response.status}`);
+    }
+    return response.json();
+  },
 };
