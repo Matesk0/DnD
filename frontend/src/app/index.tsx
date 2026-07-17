@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRuleset } from '@/hooks/useRuleset';
 import {
   Platform,
   Pressable,
@@ -13,14 +14,15 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { PlayView } from '@/components/play-view';
 import { CharacterView } from '@/components/character-view';
-import { NotesView } from '@/components/notes-view';
+import { NotesView, CampaignGraph, INITIAL_CAMPAIGNS } from '@/components/notes-view';
 import { RulebookView } from '@/components/rulebook-view';
+import { SettingsView } from '@/components/settings-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { Lineicons } from '@lineiconshq/react-native-lineicons';
 import { GamePadModern1Stroke, User4Stroke, Pencil1Stroke, Book1Stroke } from '@lineiconshq/free-icons';
 
-type TabSection = 'home' | 'play' | 'character' | 'notes' | 'rulebook';
+type TabSection = 'home' | 'play' | 'character' | 'notes' | 'rulebook' | 'settings';
 
 // Dice Roller State for native platforms only
 interface RollLog {
@@ -36,7 +38,9 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 768;
 
+  const { ruleset, setRuleset } = useRuleset();
   const [activeTab, setActiveTab] = useState<TabSection>('home');
+  const [campaigns, setCampaigns] = useState<CampaignGraph[]>(INITIAL_CAMPAIGNS);
 
   // Dice Roller State (Only shown on native mobile, hidden on Web)
   const [lastRoll, setLastRoll] = useState<RollLog | null>(null);
@@ -73,6 +77,7 @@ export default function HomeScreen() {
       { id: 'character', label: 'Character' },
       { id: 'notes', label: 'Notes' },
       { id: 'rulebook', label: 'Rulebook' },
+      { id: 'settings', label: 'Settings' },
     ];
 
     return (
@@ -104,13 +109,15 @@ export default function HomeScreen() {
   const renderContent = () => {
     switch (activeTab) {
       case 'play':
-        return <PlayView />;
+        return <PlayView campaigns={campaigns} setCampaigns={setCampaigns} />;
       case 'character':
         return <CharacterView />;
       case 'notes':
-        return <NotesView />;
+        return <NotesView campaigns={campaigns} setCampaigns={setCampaigns} />;
       case 'rulebook':
         return <RulebookView />;
+      case 'settings':
+        return <SettingsView />;
       default:
         return renderHomeTab();
     }
@@ -123,10 +130,12 @@ export default function HomeScreen() {
         {/* Hero Section */}
         <View style={styles.hero}>
           <ThemedText type="title" style={styles.heroTitle}>
-            D&D 5th Edition API
+            {ruleset === '5e' ? 'DnD5e' : 'PF2e'}
           </ThemedText>
           <ThemedText style={styles.heroSubtitle} themeColor="textSecondary">
-            The 5e System Reference Document, compiled as a web companion.
+            {ruleset === '5e'
+              ? 'The D&D 5th Edition companion and campaign logbook.'
+              : 'The Pathfinder 2e companion and campaign logbook.'}
           </ThemedText>
         </View>
 
@@ -264,9 +273,9 @@ export default function HomeScreen() {
       {/* Red/Dark Navigation Header Bar */}
       <View style={styles.navBar}>
         <View style={styles.navContainer}>
-          <Pressable onPress={() => setActiveTab('home')} style={styles.navBrand}>
+          <Pressable onPress={() => setRuleset(ruleset === '5e' ? 'pf2e' : '5e')} style={styles.navBrand}>
             <ThemedText style={styles.navBrandText}>
-              5e<View style={styles.redBox}><ThemedText style={styles.redBoxText}>API</ThemedText></View>
+              {ruleset === '5e' ? 'DnD5e' : 'PF2e'}
             </ThemedText>
           </Pressable>
 
@@ -369,20 +378,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   navBrandText: {
-    color: '#fff',
+    color: '#dfb15b',
     fontSize: 20,
-    fontWeight: 'bold',
-  },
-  redBox: {
-    backgroundColor: '#dfb15b',
-    paddingHorizontal: Spacing.one,
-    paddingVertical: 2,
-    borderRadius: Spacing.one,
-    marginLeft: 2,
-  },
-  redBoxText: {
-    color: '#fff',
-    fontSize: 14,
     fontWeight: 'bold',
   },
   navLinks: {

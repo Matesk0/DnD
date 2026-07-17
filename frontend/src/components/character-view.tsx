@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   FlatList,
   Pressable,
@@ -13,6 +13,7 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useRuleset } from '@/hooks/useRuleset';
 import { Lineicons } from '@lineiconshq/react-native-lineicons';
 import { Book1Stroke, Pencil1Stroke, UserMultiple4Stroke, User4Stroke, PlusStroke, GamePadModern1Stroke, HeartStroke, Bolt2Stroke, Shield2Stroke, MagicOutlined } from '@lineiconshq/free-icons';
 
@@ -32,6 +33,9 @@ interface Character {
   hp: number;
   speed: number;
   savingThrows: string[];
+  level: number;
+  spells: string;
+  ruleset: string;
 }
 
 const DND_CLASSES = [
@@ -72,6 +76,7 @@ type CharacterSubTab = 'builder' | 'sheet' | 'party';
 
 export function CharacterView() {
   const theme = useTheme();
+  const { ruleset } = useRuleset();
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 700;
 
@@ -90,6 +95,9 @@ export function CharacterView() {
       hp: 11,
       speed: 25,
       savingThrows: ['WIS', 'CHA'],
+      level: 1,
+      spells: 'Sacred Flame, Guidance, Cure Wounds, Bless',
+      ruleset: '5e',
     },
     {
       id: 'char_2',
@@ -100,8 +108,36 @@ export function CharacterView() {
       hp: 7,
       speed: 30,
       savingThrows: ['INT', 'WIS'],
+      level: 1,
+      spells: 'Fire Bolt, Mage Hand, Magic Missile, Shield',
+      ruleset: '5e',
+    },
+    {
+      id: 'char_pf2e_1',
+      name: 'Valeros',
+      class: 'Fighter',
+      race: 'Human',
+      stats: { strength: 18, dexterity: 12, constitution: 14, intelligence: 10, wisdom: 12, charisma: 10 },
+      hp: 20,
+      speed: 25,
+      savingThrows: ['STR', 'CON'],
+      level: 1,
+      spells: '',
+      ruleset: 'pf2e',
     },
   ]);
+
+  const filteredCharacters = useMemo(() => {
+    return characters.filter((c) => c.ruleset === ruleset);
+  }, [characters, ruleset]);
+
+  // Reset selected character when ruleset changes
+  useEffect(() => {
+    const matching = characters.filter((c) => c.ruleset === ruleset);
+    setSelectedCharId(matching[0]?.id || null);
+    setIsBuildingNew(false);
+    setActiveSubTab('sheet');
+  }, [ruleset]);
 
   // Form State for Builder / Editor
   const [name, setName] = useState('');
@@ -115,6 +151,8 @@ export function CharacterView() {
     wisdom: 10,
     charisma: 10,
   });
+  const [level, setLevel] = useState(1);
+  const [spells, setSpells] = useState('');
 
   // Prepopulate form when editing an existing character
   useEffect(() => {
@@ -127,6 +165,8 @@ export function CharacterView() {
         setSelectedClass(cls);
         setSelectedRace(rc);
         setStats({ ...char.stats });
+        setLevel(char.level || 1);
+        setSpells(char.spells || '');
       }
     }
   }, [selectedCharId, activeSubTab, isBuildingNew]);
@@ -158,7 +198,8 @@ export function CharacterView() {
 
     const conMod = getModifier(stats.constitution);
     const hitDie = selectedClass.hitDie;
-    const hp = hitDie + conMod;
+    // HP = Max at level 1 + Average for remaining + Con mod per level
+    const hp = hitDie + Math.floor(hitDie / 2 + 1) * (level > 1 ? level - 1 : 0) + (conMod * level);
     const speed = selectedRace.speed + selectedClass.speedBonus;
 
     if (selectedCharId && !isBuildingNew) {
@@ -175,6 +216,9 @@ export function CharacterView() {
                 hp: hp > 0 ? hp : 1,
                 speed,
                 savingThrows: [...selectedClass.saves],
+                level,
+                spells,
+                ruleset,
               }
             : c
         )
@@ -191,6 +235,9 @@ export function CharacterView() {
         hp: hp > 0 ? hp : 1,
         speed,
         savingThrows: [...selectedClass.saves],
+        level,
+        spells,
+        ruleset,
       };
 
       setCharacters((prev) => [newChar, ...prev]);
@@ -236,6 +283,9 @@ export function CharacterView() {
       hp: hp > 0 ? hp : 1,
       speed,
       savingThrows: [...randClass.saves],
+      level: 1,
+      spells: '',
+      ruleset,
     };
 
     setCharacters((prev) => [newChar, ...prev]);
@@ -263,6 +313,8 @@ export function CharacterView() {
       wisdom: 10,
       charisma: 10,
     });
+    setLevel(1);
+    setSpells('');
   };
 
   const selectedChar = characters.find((c) => c.id === selectedCharId);
@@ -309,14 +361,14 @@ export function CharacterView() {
         </ThemedText>
 
         <ScrollView contentContainerStyle={styles.vaultList}>
-          {characters.length === 0 ? (
+          {filteredCharacters.length === 0 ? (
             <View style={styles.emptyContainer}>
               <ThemedText style={{ fontStyle: 'italic', textAlign: 'center' }} themeColor="textSecondary">
                 Your character vault is currently empty. Click '+ New Character' above to forge a hero!
               </ThemedText>
             </View>
           ) : (
-            characters.map((c) => (
+            filteredCharacters.map((c: Character) => (
               <Pressable
                 key={c.id}
                 style={({ hovered, pressed }) => [
@@ -344,7 +396,7 @@ export function CharacterView() {
                     {c.name}
                   </ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
-                    Level 1 {c.race} {c.class}
+                    Level {c.level} {c.race} {c.class}
                   </ThemedText>
                   <View style={styles.vaultCardMeta}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: Spacing.two }}>
@@ -432,7 +484,7 @@ export function CharacterView() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Lineicons icon={UserMultiple4Stroke} size={14} color={activeSubTab === 'party' ? '#dfb15b' : '#888'} />
               <ThemedText style={[styles.tabBtnText, activeSubTab === 'party' && styles.activeTabBtnText]}>
-                Party ({characters.length})
+                Party ({filteredCharacters.length})
               </ThemedText>
             </View>
           </Pressable>
@@ -461,6 +513,22 @@ export function CharacterView() {
                     value={name}
                     onChangeText={setName}
                   />
+                </View>
+
+                {/* Level Input */}
+                <View style={styles.formGroup}>
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
+                    Character Level
+                  </ThemedText>
+                  <TextInput
+                    style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: 'rgba(255, 255, 255, 0.03)' }]}
+                    keyboardType="numeric"
+                    value={level.toString()}
+                    onChangeText={(txt) => setLevel(parseInt(txt) || 1)}
+                  />
+                  <ThemedText type="small" style={{ color: '#dfb15b', marginTop: 4 }}>
+                    Auto-calculated: Proficiency +{Math.floor(2 + (level - 1) / 4)}, Max Spell Level: {Math.ceil(level / 2)}
+                  </ThemedText>
                 </View>
 
                 {/* Race Picker */}
@@ -557,6 +625,21 @@ export function CharacterView() {
                   </View>
                 </View>
 
+                {/* Spells Input */}
+                <View style={styles.formGroup}>
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
+                    Spells Known
+                  </ThemedText>
+                  <TextInput
+                    style={[styles.input, { height: 80, textAlignVertical: 'top', color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: 'rgba(255, 255, 255, 0.03)' }]}
+                    placeholder="e.g. Fireball, Shield, Mage Armor..."
+                    placeholderTextColor={theme.textSecondary}
+                    multiline
+                    value={spells}
+                    onChangeText={setSpells}
+                  />
+                </View>
+
                 <Pressable
                   style={({ pressed }) => [
                     styles.createBtn,
@@ -590,7 +673,7 @@ export function CharacterView() {
                       {selectedChar.name}
                     </ThemedText>
                     <ThemedText type="smallBold" style={{ color: '#dfb15b' }}>
-                      Level 1 {selectedChar.race} {selectedChar.class}
+                      Level {selectedChar.level} {selectedChar.race} {selectedChar.class}
                     </ThemedText>
                   </View>
                   <Pressable
@@ -613,6 +696,10 @@ export function CharacterView() {
                   <ThemedView type="backgroundElement" style={styles.coreStatCard}>
                     <ThemedText type="small" themeColor="textSecondary">SPEED</ThemedText>
                     <ThemedText type="title" style={{ fontSize: 28 }}>{selectedChar.speed} ft</ThemedText>
+                  </ThemedView>
+                  <ThemedView type="backgroundElement" style={styles.coreStatCard}>
+                    <ThemedText type="small" themeColor="textSecondary">PROFICIENCY</ThemedText>
+                    <ThemedText type="title" style={{ color: '#dfb15b', fontSize: 28 }}>+{Math.floor(2 + (selectedChar.level - 1) / 4)}</ThemedText>
                   </ThemedView>
                 </View>
 
@@ -648,6 +735,16 @@ export function CharacterView() {
                     </View>
                   </View>
                 </View>
+
+                {/* Spells Display */}
+                {selectedChar.spells && selectedChar.spells.trim().length > 0 && (
+                  <View style={{ marginTop: Spacing.four }}>
+                    <ThemedText type="smallBold" style={styles.subTitle}>Spells Known</ThemedText>
+                    <ThemedView type="backgroundElement" style={{ padding: Spacing.three, borderRadius: Spacing.two, borderWidth: 1, borderColor: 'rgba(255,255,255,0.03)' }}>
+                      <ThemedText style={{ lineHeight: 22 }}>{selectedChar.spells}</ThemedText>
+                    </ThemedView>
+                  </View>
+                )}
               </ScrollView>
             ) : (
               <View style={styles.centerContent}>
@@ -662,7 +759,7 @@ export function CharacterView() {
             <ScrollView contentContainerStyle={{ padding: Spacing.three }}>
               <ThemedText type="smallBold" style={styles.subTitle}>Active Party Vault</ThemedText>
               <View style={styles.charListContainer}>
-                {characters.map((item) => (
+                {filteredCharacters.map((item: Character) => (
                   <ThemedView
                     key={item.id}
                     type="backgroundElement"
@@ -681,7 +778,7 @@ export function CharacterView() {
                       <View>
                         <ThemedText type="smallBold">{item.name}</ThemedText>
                         <ThemedText type="small" themeColor="textSecondary">
-                          Level 1 {item.race} {item.class}
+                          Level {item.level} {item.race} {item.class}
                         </ThemedText>
                       </View>
                     </View>

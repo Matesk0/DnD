@@ -14,9 +14,11 @@ import { ThemedView } from './themed-view';
 import { LoadingSpinner } from './loading-spinner';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useRuleset } from '@/hooks/useRuleset';
 
 export function MonstersView({ onBack }: { onBack: () => void }) {
   const theme = useTheme();
+  const { ruleset } = useRuleset();
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 700;
 
@@ -38,7 +40,7 @@ export function MonstersView({ onBack }: { onBack: () => void }) {
     async function loadMonsters() {
       try {
         setLoadingList(true);
-        const data = await dndApi.getMonsters();
+        const data = await dndApi.getMonsters(ruleset);
         setMonsters(data);
         setErrorList(null);
       } catch (err) {
@@ -48,7 +50,7 @@ export function MonstersView({ onBack }: { onBack: () => void }) {
       }
     }
     loadMonsters();
-  }, []);
+  }, [ruleset]);
 
   // Fetch monster details when selected index changes
   useEffect(() => {
@@ -61,7 +63,7 @@ export function MonstersView({ onBack }: { onBack: () => void }) {
       try {
         setLoadingDetails(true);
         setErrorDetails(null);
-        const details = await dndApi.getMonsterDetails(selectedMonsterIndex!);
+        const details = await dndApi.getMonsterDetails(selectedMonsterIndex!, ruleset);
         setMonsterDetails(details);
       } catch (err) {
         setErrorDetails('Could not locate the monster stats.');
@@ -71,7 +73,7 @@ export function MonstersView({ onBack }: { onBack: () => void }) {
     }
 
     loadMonsterDetails();
-  }, [selectedMonsterIndex]);
+  }, [selectedMonsterIndex, ruleset]);
 
   // Filtered monsters list
   const filteredMonsters = useMemo(() => {

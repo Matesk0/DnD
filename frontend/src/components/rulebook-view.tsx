@@ -17,6 +17,7 @@ import { ThemedView } from './themed-view';
 import { LoadingSpinner } from './loading-spinner';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useRuleset } from '@/hooks/useRuleset';
 import { Lineicons } from '@lineiconshq/react-native-lineicons';
 import {
   Book1Stroke,
@@ -67,6 +68,7 @@ const RULEBOOK_SECTIONS: RulebookItem[] = [
 
 export function RulebookView() {
   const theme = useTheme();
+  const { ruleset } = useRuleset();
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 700;
 
@@ -94,7 +96,7 @@ export function RulebookView() {
   const loadHomebrews = async () => {
     try {
       setLoadingHomebrew(true);
-      const data = await dndApi.fetchCollection('homebrew');
+      const data = await dndApi.fetchCollection('homebrew', ruleset);
       setHomebrewList(data);
     } catch (err) {
       console.warn('Failed to load homebrews from API:', err);
@@ -107,7 +109,7 @@ export function RulebookView() {
     if (activeSection === 'homebrew') {
       loadHomebrews();
     }
-  }, [activeSection]);
+  }, [activeSection, ruleset]);
 
   const saveHomebrew = async () => {
     if (!homebrewTitle.trim() || !homebrewBody.trim()) return;
@@ -118,7 +120,7 @@ export function RulebookView() {
       desc: [homebrewBody],
     };
     try {
-      await dndApi.saveHomebrew(newItem);
+      await dndApi.saveHomebrew(newItem, ruleset);
       setHomebrewList((prev) => [newItem, ...prev]);
       setHomebrewTitle('');
       setHomebrewBody('');
@@ -144,18 +146,18 @@ export function RulebookView() {
 
         let data: DndListItem[] = [];
         if (activeSection === 'backgrounds') {
-          data = await dndApi.getBackgrounds();
+          data = await dndApi.getBackgrounds(ruleset);
         } else if (activeSection === 'feats') {
-          data = await dndApi.getFeats();
+          data = await dndApi.getFeats(ruleset);
         } else if (activeSection === 'items') {
           if (itemTypeTab === 'standard') {
-            data = await dndApi.getEquipment();
+            data = await dndApi.getEquipment(ruleset);
           } else {
-            data = await dndApi.getMagicItems();
+            data = await dndApi.getMagicItems(ruleset);
           }
         } else {
           // Dynamic collections for other API-driven sections
-          data = await dndApi.fetchCollection(activeSection);
+          data = await dndApi.fetchCollection(activeSection, ruleset);
         }
         setListData(data);
       } catch (err) {
@@ -165,7 +167,7 @@ export function RulebookView() {
       }
     }
     loadData();
-  }, [activeSection, itemTypeTab]);
+  }, [activeSection, itemTypeTab, ruleset]);
 
   // Load generic item details
   useEffect(() => {
@@ -182,18 +184,18 @@ export function RulebookView() {
         let data: any = null;
 
         if (activeSection === 'backgrounds') {
-          data = await dndApi.getBackgroundDetails(index!);
+          data = await dndApi.getBackgroundDetails(index!, ruleset);
         } else if (activeSection === 'feats') {
-          data = await dndApi.getFeatDetails(index!);
+          data = await dndApi.getFeatDetails(index!, ruleset);
         } else if (activeSection === 'items') {
           if (itemTypeTab === 'standard') {
-            data = await dndApi.getEquipmentDetails(index!);
+            data = await dndApi.getEquipmentDetails(index!, ruleset);
           } else {
-            data = await dndApi.getMagicItemDetails(index!);
+            data = await dndApi.getMagicItemDetails(index!, ruleset);
           }
         } else {
           // Dynamic details for other sections
-          data = await dndApi.fetchDetails(activeSection, index!);
+          data = await dndApi.fetchDetails(activeSection, index!, ruleset);
         }
         setDetailsData(data);
       } catch (err) {
@@ -203,7 +205,7 @@ export function RulebookView() {
       }
     }
     loadDetails();
-  }, [selectedItemIndex]);
+  }, [selectedItemIndex, activeSection, itemTypeTab, ruleset]);
 
   // Filtered generic list
   const filteredList = useMemo(() => {
@@ -412,7 +414,7 @@ export function RulebookView() {
       <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.menuScroll}>
         <View style={styles.menuHeader}>
           <ThemedText type="subtitle" style={styles.title}>
-            📚 D&D 5E Rulebook
+            📚 {ruleset === '5e' ? 'D&D 5E Rulebook' : 'Pathfinder 2e Rulebook'}
           </ThemedText>
           <ThemedText style={styles.tagline} themeColor="textSecondary">
             Consult the archives of D&D 5th Edition. Browse through official SRD datasets, playtest documents, and homebrew design modules.

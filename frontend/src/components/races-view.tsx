@@ -13,9 +13,11 @@ import { ThemedView } from './themed-view';
 import { LoadingSpinner } from './loading-spinner';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useRuleset } from '@/hooks/useRuleset';
 
 export function RacesView({ onBack }: { onBack: () => void }) {
   const theme = useTheme();
+  const { ruleset } = useRuleset();
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 700;
 
@@ -34,7 +36,7 @@ export function RacesView({ onBack }: { onBack: () => void }) {
     async function loadRaces() {
       try {
         setLoadingList(true);
-        const data = await dndApi.getRaces();
+        const data = await dndApi.getRaces(ruleset);
         setRaces(data);
         setErrorList(null);
       } catch (err) {
@@ -44,7 +46,7 @@ export function RacesView({ onBack }: { onBack: () => void }) {
       }
     }
     loadRaces();
-  }, []);
+  }, [ruleset]);
 
   // Fetch race details when selected index changes
   useEffect(() => {
@@ -57,7 +59,7 @@ export function RacesView({ onBack }: { onBack: () => void }) {
       try {
         setLoadingDetails(true);
         setErrorDetails(null);
-        const details = await dndApi.getRaceDetails(selectedRaceIndex!);
+        const details = await dndApi.getRaceDetails(selectedRaceIndex!, ruleset);
         setRaceDetails(details);
       } catch (err) {
         setErrorDetails('Could not read lineage scrolls.');
@@ -67,7 +69,7 @@ export function RacesView({ onBack }: { onBack: () => void }) {
     }
 
     loadRaceDetails();
-  }, [selectedRaceIndex]);
+  }, [selectedRaceIndex, ruleset]);
 
   // Render Race Details Content
   const renderRaceDetails = () => {

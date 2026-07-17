@@ -12,30 +12,33 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useRuleset } from '@/hooks/useRuleset';
 import { Lineicons } from '@lineiconshq/react-native-lineicons';
 import { Book1Stroke, Pencil1Stroke, PlusStroke, Trash3Stroke, XmarkStroke, Home2Stroke } from '@lineiconshq/free-icons';
 
-interface Note {
+export interface Note {
   id: string;
   title: string;
   body: string;
   linkedIds: string[];
 }
 
-interface CampaignGraph {
+export interface CampaignGraph {
   id: string;
   title: string;
   emoji: string;
   desc: string;
   notes: Note[];
+  ruleset: string;
 }
 
-const INITIAL_CAMPAIGNS: CampaignGraph[] = [
+export const INITIAL_CAMPAIGNS: CampaignGraph[] = [
   {
     id: 'sword-coast',
     title: 'Sword Coast Chronicles',
     emoji: '⚔️',
     desc: 'The Campaign set in the Forgotten Realms. Track the Cult of the Dragon Eye near Neverwinter.',
+    ruleset: '5e',
     notes: [
       {
         id: '1',
@@ -68,6 +71,7 @@ const INITIAL_CAMPAIGNS: CampaignGraph[] = [
     title: 'Barovia Gothic Journal',
     emoji: '🏰',
     desc: 'Curse of Strahd campaign notes. Track the Tarokka readings, Castle Ravenloft mysteries, and Strahd himself.',
+    ruleset: '5e',
     notes: [
       {
         id: '1',
@@ -100,6 +104,7 @@ const INITIAL_CAMPAIGNS: CampaignGraph[] = [
     title: 'Waterdeep Dragon Heist',
     emoji: '🪙',
     desc: 'Urban faction war for 500,000 gold dragons. Track faction ranks and underworld contacts.',
+    ruleset: '5e',
     notes: [
       {
         id: '1',
@@ -127,14 +132,47 @@ const INITIAL_CAMPAIGNS: CampaignGraph[] = [
       },
     ],
   },
+  {
+    id: 'abomination-vaults',
+    title: 'Abomination Vaults Journal',
+    emoji: '💀',
+    desc: 'Pathfinder 2e Abomination Vaults campaign notes. Track the ruins of Gauntlight.',
+    ruleset: 'pf2e',
+    notes: [
+      {
+        id: '1',
+        title: 'Abomination Vaults Campaign',
+        body: 'The campaign revolves around a massive dungeon near Otari. The lighthouse of Gauntlight is glowing again.',
+        linkedIds: ['2'],
+      },
+      {
+        id: '2',
+        title: 'Belcorra Harasang',
+        body: 'An ancient evil wizard who built the vaults. She seeks revenge against the Roseguard.',
+        linkedIds: ['1'],
+      }
+    ],
+  },
 ];
 
-export function NotesView() {
+export function NotesView({
+  campaigns,
+  setCampaigns,
+}: {
+  campaigns: CampaignGraph[];
+  setCampaigns: React.Dispatch<React.SetStateAction<CampaignGraph[]>>;
+}) {
   const theme = useTheme();
+  const { ruleset } = useRuleset();
   const { width, height } = useWindowDimensions();
   const isLargeScreen = width > 700;
 
-  const [campaigns, setCampaigns] = useState<CampaignGraph[]>(INITIAL_CAMPAIGNS);
+  // Reset selected Campaign when ruleset changes
+  useEffect(() => {
+    setSelectedCampaignId(null);
+    setActiveNoteId(null);
+  }, [ruleset]);
+
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
 
   // Time state for floating animation like Obsidian
@@ -267,28 +305,61 @@ export function NotesView() {
     );
   };
 
-  // Calculate coordinates for nodes (Circle Layout with floating animation)
+  // Calculate coordinates for nodes (Obsidian-like BFS tree layout from root)
   const nodePositions = useMemo(() => {
-    if (!activeCampaign) return {};
-    const notesCount = activeCampaign.notes.length;
-    const center = { x: width / 2 - 40, y: height / 2 - 120 };
-    const radius = Math.min(width, height) * 0.28; // Adjust radius based on screen size
-    const positions: Record<string, { x: number; y: number }> = {};
+    if (!activeCampaign || activeCampaign.notes.length === 0) return {};
+    
+    // Determine depths using BFS
+    const depths = new Map<string, number>();
+    const queue = [{ id: activeCampaign.notes[0].id, d: 0 }];
+    const visited = new Set<string>();
 
-    activeCampaign.notes.forEach((note, index) => {
-      const angle = (index * 2 * Math.PI) / (notesCount || 1);
-      const baseX = center.x + Math.cos(angle) * radius;
-      const baseY = center.y + Math.sin(angle) * radius;
+    while (queue.length > 0) {
+      const { id, d } = queue.shift()!;
+      if (!visited.has(id)) {
+        visited.add(id);
+        depths.set(id, d);
+        const note = activeCampaign.notes.find((n) => n.id === id);
+        if (note) {
+          note.linkedIds.forEach((linkId) => queue.push({ id: linkId, d: d + 1 }));
+        }
+      }
+    }
 
-      // Gentle floating drift like in Obsidian
-      const phase = index * 1.7; // unique phase offset per node
-      const driftX = Math.sin(time + phase) * 15;
-      const driftY = Math.cos(time * 0.7 + phase) * 15;
+    // Assign depths for disconnected nodes
+    activeCampaign.notes.forEach((n) => {
+      if (!depths.has(n.id)) depths.set(n.id, 1);
+    });
 
-      positions[note.id] = {
-        x: baseX + driftX,
-        y: baseY + driftY,
-      };
+    // Group by depth
+    const nodesByDepth = new Map<number, string[]>();
+    depths.forEach((d, id) => {
+      if (!nodesByDepth.has(d)) nodesByDepth.set(d, []);
+      nodesByDepth.get(d)!.push(id);
+    });
+
+    const positions: Record<string, { x: number; y: number; scale: number }> = {};
+    const center = { x: width / 2 - 140, y: height / 2 - 120 }; // Offset for left panel
+    
+    nodesByDepth.forEach((ids, d) => {
+      // Radius increases with depth
+      const radius = d === 0 ? 0 : d * 140;
+      ids.forEach((id, index) => {
+        const angle = (index * 2 * Math.PI) / (ids.length || 1);
+        const baseX = center.x + Math.cos(angle) * radius;
+        const baseY = center.y + Math.sin(angle) * radius;
+
+        // Gentle floating drift
+        const phase = index * 1.7; 
+        const driftX = Math.sin(time + phase) * 10;
+        const driftY = Math.cos(time * 0.7 + phase) * 10;
+
+        positions[id] = {
+          x: baseX + driftX,
+          y: baseY + driftY,
+          scale: Math.max(0.4, 1 - d * 0.15), // Nodes get smaller as they branch out
+        };
+      });
     });
 
     return positions;
@@ -331,7 +402,6 @@ export function NotesView() {
     );
   }, [activeCampaign, activeNote]);
 
-  // Campaign creation
   const handleCreateCampaign = () => {
     const newId = Date.now().toString();
     const newCampaign: CampaignGraph = {
@@ -339,6 +409,7 @@ export function NotesView() {
       title: 'New Campaign Journal',
       emoji: '📓',
       desc: 'Customize this campaign and start building your interactive note graph.',
+      ruleset,
       notes: [
         {
           id: '1',
@@ -374,11 +445,13 @@ export function NotesView() {
         </View>
 
         <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-          Select a D&D Campaign Graph to view and connect your campaign logs:
+          Select a {ruleset === '5e' ? 'DnD5e' : 'PF2e'} Campaign Graph to view and connect your campaign logs:
         </ThemedText>
 
         <ScrollView contentContainerStyle={styles.campaignList}>
-          {campaigns.map((c) => (
+          {campaigns
+            .filter((c) => c.ruleset === ruleset)
+            .map((c) => (
             <Pressable
               key={c.id}
               style={({ hovered, pressed }) => [
@@ -455,8 +528,31 @@ export function NotesView() {
         </Pressable>
       </View>
 
-      {/* Full Screen Canvas */}
-      <View style={styles.canvasContainer}>
+      <View style={{ flex: 1, flexDirection: 'row' }}>
+        {/* Left Side Panel (Folder Paths) */}
+        <View style={[styles.leftPanel, { backgroundColor: theme.backgroundElement, borderRightColor: theme.backgroundSelected }]}>
+          <ScrollView contentContainerStyle={styles.leftPanelScroll}>
+            <ThemedText type="smallBold" style={{ color: '#dfb15b', marginBottom: 12 }}>
+              Campaign Notes
+            </ThemedText>
+            {activeCampaign?.notes.map((note) => {
+              const isActive = note.id === activeNoteId;
+              return (
+                <Pressable
+                  key={note.id}
+                  style={[styles.leftPanelItem, isActive && { backgroundColor: theme.backgroundSelected }]}
+                  onPress={() => handleSelectNote(note.id)}>
+                  <ThemedText style={[styles.leftPanelItemText, isActive && { color: '#dfb15b', fontWeight: 'bold' }]} numberOfLines={1}>
+                    📄 {note.title}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Full Screen Canvas */}
+        <View style={styles.canvasContainer}>
         <ThemedText type="small" themeColor="textSecondary" style={styles.graphInstruction}>
           🔗 Knowledge Graph view. Click any node to read or edit.
         </ThemedText>
@@ -506,10 +602,11 @@ export function NotesView() {
                     top: pos.y,
                     borderColor: isNoteActive ? '#dfb15b' : theme.backgroundSelected,
                     backgroundColor: isNoteActive ? '#dfb15b' : theme.backgroundElement,
+                    transform: [{ scale: pos.scale }],
                   },
                    hovered && {
                      borderColor: '#dfb15b',
-                     transform: [{ scale: 1.12 }],
+                     transform: [{ scale: pos.scale * 1.12 }],
                      shadowColor: '#dfb15b',
                      shadowOffset: { width: 0, height: 0 },
                      shadowOpacity: 0.6,
@@ -682,6 +779,7 @@ export function NotesView() {
           </ThemedView>
         </Animated.View>
       )}
+      </View>
     </View>
   );
 }
@@ -860,6 +958,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
+  },
+  leftPanel: {
+    width: 250,
+    borderRightWidth: 1,
+    height: '100%',
+  },
+  leftPanelScroll: {
+    padding: Spacing.three,
+  },
+  leftPanelItem: {
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.two,
+    borderRadius: Spacing.one,
+    marginBottom: 4,
+  },
+  leftPanelItemText: {
+    fontSize: 13,
   },
   closeBtn: {
     padding: Spacing.one,

@@ -13,9 +13,11 @@ import { ThemedView } from './themed-view';
 import { LoadingSpinner } from './loading-spinner';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useRuleset } from '@/hooks/useRuleset';
 
 export function ClassesView({ onBack }: { onBack: () => void }) {
   const theme = useTheme();
+  const { ruleset } = useRuleset();
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 700;
 
@@ -34,7 +36,7 @@ export function ClassesView({ onBack }: { onBack: () => void }) {
     async function loadClasses() {
       try {
         setLoadingList(true);
-        const data = await dndApi.getClasses();
+        const data = await dndApi.getClasses(ruleset);
         setClasses(data);
         setErrorList(null);
       } catch (err) {
@@ -44,7 +46,7 @@ export function ClassesView({ onBack }: { onBack: () => void }) {
       }
     }
     loadClasses();
-  }, []);
+  }, [ruleset]);
 
   // Fetch class details when selected index changes
   useEffect(() => {
@@ -57,7 +59,7 @@ export function ClassesView({ onBack }: { onBack: () => void }) {
       try {
         setLoadingDetails(true);
         setErrorDetails(null);
-        const details = await dndApi.getClassDetails(selectedClassIndex!);
+        const details = await dndApi.getClassDetails(selectedClassIndex!, ruleset);
         setClassDetails(details);
       } catch (err) {
         setErrorDetails('Could not read class scroll.');
@@ -67,7 +69,7 @@ export function ClassesView({ onBack }: { onBack: () => void }) {
     }
 
     loadClassDetails();
-  }, [selectedClassIndex]);
+  }, [selectedClassIndex, ruleset]);
 
   // Render Class Details Content
   const renderClassDetails = () => {

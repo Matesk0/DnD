@@ -1,4 +1,29 @@
 import React, { useEffect, useState, useMemo } from 'react';
+
+const MOCK_SPELLS_5E = [
+  { index: 'acid-splash', name: 'Acid Splash', level: 0 },
+  { index: 'chill-touch', name: 'Chill Touch', level: 0 },
+  { index: 'fire-bolt', name: 'Fire Bolt', level: 0 },
+  { index: 'mage-hand', name: 'Mage Hand', level: 0 },
+  { index: 'cure-wounds', name: 'Cure Wounds', level: 1 },
+  { index: 'magic-missile', name: 'Magic Missile', level: 1 },
+  { index: 'shield', name: 'Shield', level: 1 },
+  { index: 'invisibility', name: 'Invisibility', level: 2 },
+  { index: 'web', name: 'Web', level: 2 },
+  { index: 'fireball', name: 'Fireball', level: 3 },
+  { index: 'dimension-door', name: 'Dimension Door', level: 4 },
+];
+
+const MOCK_SPELLS_PF2E = [
+  { index: 'electric-arc', name: 'Electric Arc', level: 0 },
+  { index: 'guidance', name: 'Guidance', level: 0 },
+  { index: 'heal', name: 'Heal', level: 1 },
+  { index: 'magic-missile-pf2e', name: 'Magic Missile (PF2e)', level: 1 },
+  { index: 'soothe', name: 'Soothe', level: 1 },
+  { index: 'dispel-magic', name: 'Dispel Magic', level: 2 },
+  { index: 'haste', name: 'Haste', level: 3 },
+  { index: 'teleport', name: 'Teleport', level: 5 },
+];
 import {
   FlatList,
   Pressable,
@@ -14,19 +39,23 @@ import { ThemedView } from './themed-view';
 import { LoadingSpinner } from './loading-spinner';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useRuleset } from '@/hooks/useRuleset';
 
 export function SpellsView({ onBack }: { onBack: () => void }) {
   const theme = useTheme();
+  const { ruleset } = useRuleset();
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 700;
 
   const [spells, setSpells] = useState<DndListItem[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [errorList, setErrorList] = useState<string | null>(null);
+  const [offlineMode, setOfflineMode] = useState(false);
 
   // Search and Filter State
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+  const [selectedLevels, setSelectedLevels] = useState<number[]>([]);
+  const [showLevelDropdown, setShowLevelDropdown] = useState(false);
 
   // Selected Spell Details State
   const [selectedSpellIndex, setSelectedSpellIndex] = useState<string | null>(null);
@@ -39,17 +68,22 @@ export function SpellsView({ onBack }: { onBack: () => void }) {
     async function loadSpells() {
       try {
         setLoadingList(true);
-        const data = await dndApi.getSpells();
+        const data = await dndApi.getSpells(ruleset);
         setSpells(data);
         setErrorList(null);
+        setOfflineMode(false);
       } catch (err) {
-        setErrorList('Failed to fetch the ancient scrolls. Are you offline?');
+        // Fallback to offline mock database
+        const fallback = ruleset === '5e' ? MOCK_SPELLS_5E : MOCK_SPELLS_PF2E;
+        setSpells(fallback);
+        setErrorList(null);
+        setOfflineMode(true);
       } finally {
         setLoadingList(false);
       }
     }
     loadSpells();
-  }, []);
+  }, [ruleset]);
 
   // Fetch spell details when selected index changes
   useEffect(() => {
@@ -62,46 +96,63 @@ export function SpellsView({ onBack }: { onBack: () => void }) {
       try {
         setLoadingDetails(true);
         setErrorDetails(null);
-        const details = await dndApi.getSpellDetails(selectedSpellIndex!);
+        const details = await dndApi.getSpellDetails(selectedSpellIndex!, ruleset);
         setSpellDetails(details);
       } catch (err) {
-        setErrorDetails('Could not decipher this spell.');
+        // Mock details fallback
+        const spellName = spells.find(s => s.index === selectedSpellIndex)?.name || 'Unknown Spell';
+        const spellLvl = spells.find(s => s.index === selectedSpellIndex)?.level ?? 1;
+        setSpellDetails({
+          index: selectedSpellIndex!,
+          name: spellName,
+          level: spellLvl,
+          school: { name: 'Evocation' },
+          casting_time: '1 action',
+          range: '60 feet',
+          duration: 'Instantaneous',
+          components: ['V', 'S'],
+          ritual: false,
+          concentration: false,
+          classes: [],
+          desc: ['[Offline Mode] Deciphering this scroll details failed. The remote connection is currently severed, but local archives loaded this default spell metadata.'],
+        });
       } finally {
         setLoadingDetails(false);
       }
     }
 
     loadSpellDetails();
-  }, [selectedSpellIndex]);
+  }, [selectedSpellIndex, ruleset, spells]);
 
   // Filtered spells
   const filteredSpells = useMemo(() => {
     return spells.filter((spell) => {
       const matchesSearch = spell.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesLevel =
-        selectedLevel === null ||
-        spell.level === selectedLevel ||
-        // Fallback in case spell level isn't in list, we'll check index or fetch details,
-        // but for now, we can trust the API or let level filter work if present.
-        (spell.level === undefined);
+        selectedLevels.length === 0 ||
+        (spell.level !== undefined && selectedLevels.includes(spell.level));
       return matchesSearch && matchesLevel;
     });
-  }, [spells, searchQuery, selectedLevel]);
+  }, [spells, searchQuery, selectedLevels]);
 
-  // Levels mapping for filter buttons
-  const levels = [
-    { label: 'All', value: null },
+  const levelOptions = [
     { label: 'Cantrip', value: 0 },
-    { label: '1st', value: 1 },
-    { label: '2nd', value: 2 },
-    { label: '3rd', value: 3 },
-    { label: '4th', value: 4 },
-    { label: '5th', value: 5 },
-    { label: '6th', value: 6 },
-    { label: '7th', value: 7 },
-    { label: '8th', value: 8 },
-    { label: '9th', value: 9 },
+    { label: '1st Level', value: 1 },
+    { label: '2nd Level', value: 2 },
+    { label: '3rd Level', value: 3 },
+    { label: '4th Level', value: 4 },
+    { label: '5th Level', value: 5 },
+    { label: '6th Level', value: 6 },
+    { label: '7th Level', value: 7 },
+    { label: '8th Level', value: 8 },
+    { label: '9th Level', value: 9 },
   ];
+
+  const toggleLevel = (val: number) => {
+    setSelectedLevels(prev =>
+      prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]
+    );
+  };
 
   // Render Spell details content
   const renderSpellDetails = () => {
@@ -262,7 +313,7 @@ export function SpellsView({ onBack }: { onBack: () => void }) {
           </ThemedText>
         </Pressable>
         <ThemedText type="subtitle" style={styles.headerTitle}>
-          🪄 Spells Codex
+          🪄 Spells Codex {offlineMode && <ThemedText type="small" style={{ color: '#e53e3e', fontSize: 10 }}>[Offline Archives]</ThemedText>}
         </ThemedText>
       </View>
 
@@ -292,34 +343,66 @@ export function SpellsView({ onBack }: { onBack: () => void }) {
                 onChangeText={setSearchQuery}
               />
 
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.levelFilterScroll}
-                contentContainerStyle={styles.levelFilterContainer}>
-                {levels.map((lvl) => (
-                  <Pressable
-                    key={lvl.label}
-                    style={[
-                      styles.filterTag,
-                      {
-                        backgroundColor:
-                          selectedLevel === lvl.value ? '#805ad5' : theme.backgroundElement,
-                      },
-                    ]}
-                    onPress={() => setSelectedLevel(lvl.value)}>
-                    <ThemedText
-                      style={[
-                        styles.filterTagText,
-                        {
-                          color: selectedLevel === lvl.value ? '#fff' : theme.text,
-                        },
-                      ]}>
-                      {lvl.label}
-                    </ThemedText>
-                  </Pressable>
-                ))}
-              </ScrollView>
+              <Pressable
+                style={[
+                  styles.dropdownButton,
+                  {
+                    backgroundColor: theme.backgroundElement,
+                    borderColor: theme.backgroundSelected,
+                  },
+                ]}
+                onPress={() => setShowLevelDropdown(!showLevelDropdown)}>
+                <ThemedText style={styles.dropdownButtonText}>
+                  {selectedLevels.length === 0
+                    ? 'Filter Levels: All'
+                    : `Filter Levels: ${selectedLevels.length} Included`}
+                </ThemedText>
+                <ThemedText style={{ color: '#dfb15b', fontSize: 10 }}>
+                  {showLevelDropdown ? '▲' : '▼'}
+                </ThemedText>
+              </Pressable>
+
+              {showLevelDropdown && (
+                <View
+                  style={[
+                    styles.dropdownPopover,
+                    {
+                      backgroundColor: theme.backgroundElement,
+                      borderColor: theme.backgroundSelected,
+                    },
+                  ]}>
+                  <View style={styles.dropdownHeader}>
+                    <Pressable onPress={() => setSelectedLevels([])} style={styles.dropdownHeaderBtn}>
+                      <ThemedText style={styles.dropdownHeaderBtnText}>Clear All</ThemedText>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => setSelectedLevels(levelOptions.map((l) => l.value))}
+                      style={styles.dropdownHeaderBtn}>
+                      <ThemedText style={styles.dropdownHeaderBtnText}>Select All</ThemedText>
+                    </Pressable>
+                  </View>
+                  <View style={styles.checkboxGrid}>
+                    {levelOptions.map((opt) => {
+                      const isChecked = selectedLevels.includes(opt.value);
+                      return (
+                        <Pressable
+                          key={opt.value}
+                          style={[styles.checkboxItem, isChecked && styles.checkboxItemActive]}
+                          onPress={() => toggleLevel(opt.value)}>
+                          <View style={[styles.checkboxBox, isChecked && styles.checkboxBoxChecked]}>
+                            {isChecked && (
+                              <ThemedText style={{ color: '#000', fontSize: 8, fontWeight: 'bold' }}>
+                                ✓
+                              </ThemedText>
+                            )}
+                          </View>
+                          <ThemedText style={styles.checkboxLabel}>{opt.label}</ThemedText>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
             </View>
 
             {/* List */}
@@ -550,5 +633,76 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
     borderTopWidth: 1,
     borderTopColor: 'rgba(214, 158, 46, 0.1)',
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 40,
+    borderWidth: 1,
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    marginTop: Spacing.two,
+  },
+  dropdownButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  dropdownPopover: {
+    marginTop: Spacing.one,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  dropdownHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: Spacing.one,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  dropdownHeaderBtn: {
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+  },
+  dropdownHeaderBtnText: {
+    fontSize: 10,
+    color: '#dfb15b',
+    fontWeight: 'bold',
+  },
+  checkboxGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: Spacing.one,
+  },
+  checkboxItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '46%',
+    padding: 6,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    gap: 6,
+  },
+  checkboxItemActive: {
+    backgroundColor: 'rgba(223,177,91,0.05)',
+  },
+  checkboxBox: {
+    width: 14,
+    height: 14,
+    borderWidth: 1,
+    borderColor: '#444',
+    borderRadius: 3,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxBoxChecked: {
+    backgroundColor: '#dfb15b',
+    borderColor: '#dfb15b',
+  },
+  checkboxLabel: {
+    fontSize: 10,
   },
 });
